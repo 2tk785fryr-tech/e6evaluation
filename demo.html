@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="color-scheme" content="light">
+<title>DEMO &mdash; ITG E-6 Brag Sheet &amp; Eval Prompt Builder</title>
+<style>
+  :root{
+    --ink:#15181C;
+    --steel:#242A31;
+    --steel-2:#39424C;
+    --paper:#F6F6F3;
+    --card:#FFFFFF;
+    --rule:#D2D6D0;
+    --rule-soft:#E6E8E3;
+    --amber:#A8700A;
+    --amber-bright:#C98A12;
+    --alarm:#9C2B23;
+    --alarm-soft:#D98A82;
+    --alarm-bg:#FBEFEE;
+    --ready:#2F6B45;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  html,body{margin:0;padding:0;}
+
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 clamp(14px,4vw,20px) 90px;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead{
+    background:var(--steel);
+    color:#EDEFEA;
+    border-bottom:3px solid var(--amber);
+    padding-top:env(safe-area-inset-top);
+  }
+  .masthead .wrap{padding-top:24px;padding-bottom:22px;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--amber-bright);
+    margin:0 0 10px;
+  }
+  .masthead h1{
+    font-size:clamp(23px,5vw,36px);
+    line-height:1.1;
+    letter-spacing:-.015em;
+    margin:0 0 10px;
+    font-weight:650;
+  }
+  .masthead p.lede{
+    margin:0;
+    max-width:60ch;
+    color:#B9C0C7;
+    font-size:15px;
+  }
+  .formref{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.05em;
+    color:#8D969F;
+    margin:14px 0 0;
+    border-top:1px solid #3A424B;
+    padding-top:12px;
+  }
+  .helpjump{
+    display:block;
+    margin-top:14px;
+    background:#2E353D;
+    border:1px solid #414A54;
+    border-left:3px solid var(--amber);
+    padding:11px 14px;
+    color:#DDE1E5;
+    font-size:14px;
+    text-decoration:none;
+  }
+  .helpjump:hover,.helpjump:focus{background:#353D46;color:#fff;}
+  .helpjump strong{color:var(--amber-bright);font-weight:650;}
+
+  /* ---------- opsec ---------- */
+  .opsec{
+    background:var(--alarm-bg);
+    border:1px solid #E3BEBA;
+    border-left:5px solid var(--alarm);
+    padding:18px;
+    margin:24px 0 26px;
+    border-radius:2px;
+  }
+  .opsec h2{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--alarm);
+    margin:0 0 10px;
+  }
+  .opsec ul{margin:0 0 14px;padding-left:20px;font-size:14.5px;}
+  .opsec li{margin-bottom:6px;}
+  .ack{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    background:#fff;
+    border:1px solid #E3BEBA;
+    padding:14px;
+    font-size:15px;
+    font-weight:550;
+    cursor:pointer;
+    min-height:48px;
+  }
+  .ack input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--alarm);flex:none;}
+
+  /* ---------- readiness gauge ---------- */
+  .gauge{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:var(--card);
+    border:1px solid var(--rule);
+    padding:12px 16px;
+    margin-bottom:26px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+  }
+  .gauge-label{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.13em;
+    text-transform:uppercase;
+    color:#6C747C;
+    flex:none;
+  }
+  .segments{display:flex;gap:3px;flex:1;min-width:140px;}
+  .seg{height:12px;flex:1;background:var(--rule-soft);transition:background .18s ease;}
+  .seg.on{background:var(--amber);}
+  .seg.on.strong{background:var(--ready);}
+  .gauge-state{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    font-weight:700;
+    flex:none;
+  }
+  .gauge-note{
+    font-size:13px;
+    color:#5D656D;
+    flex-basis:100%;
+    margin:0;
+  }
+
+  /* ---------- sections ---------- */
+  section.block{
+    background:var(--card);
+    border:1px solid var(--rule);
+    margin-bottom:18px;
+  }
+  .block-head{
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    padding:15px 18px;
+    border-bottom:1px solid var(--rule-soft);
+    background:#FAFAF8;
+    flex-wrap:wrap;
+  }
+  .idx{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--amber);
+    font-weight:700;
+    flex:none;
+  }
+  .block-head h3{margin:0;font-size:15.5px;font-weight:650;}
+  .block-head .hint{
+    font-size:13px;
+    color:#6C747C;
+    margin-left:auto;
+    text-align:right;
+  }
+  .block-body{padding:18px;}
+
+  .field{margin-bottom:18px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#4A525A;
+    margin-bottom:7px;
+  }
+  .field .sub{
+    display:block;
+    font-family:var(--sans);
+    font-size:13px;
+    letter-spacing:0;
+    text-transform:none;
+    color:#7A828A;
+    margin-top:4px;
+  }
+  .req-star{color:var(--alarm);font-weight:700;margin-left:2px;}
+
+  input[type=text], textarea, select{
+    width:100%;
+    font-family:var(--mono);
+    font-size:16px;
+    color:var(--ink);
+    background:#FCFCFA;
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:11px;
+    line-height:1.45;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  select{
+    background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234A525A' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    padding-right:34px;
+  }
+  textarea{resize:vertical;min-height:76px;}
+  input[type=text]:focus, textarea:focus, select:focus{
+    outline:2px solid var(--amber);
+    outline-offset:-1px;
+    background:#fff;
+  }
+
+  .field.needs input[type=text],
+  .field.needs textarea,
+  .field.needs select{
+    border-color:var(--alarm-soft);
+    border-left:4px solid var(--alarm);
+    background:#FEF8F7;
+  }
+  .field.needs label{color:var(--alarm);}
+  .field.filled-req input[type=text],
+  .field.filled-req textarea,
+  .field.filled-req select{
+    border-left:4px solid var(--ready);
+  }
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .num-flag{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:9.5px;
+    letter-spacing:.07em;
+    color:var(--amber);
+    border:1px solid #E3D2AC;
+    background:#FDF8EC;
+    padding:1px 5px;
+    margin-left:6px;
+    vertical-align:1px;
+    white-space:nowrap;
+  }
+  .callout{
+    background:#FDF8EC;
+    border-left:3px solid var(--amber);
+    padding:11px 13px;
+    font-size:13.5px;
+    color:#5A5138;
+    margin:0 0 18px;
+  }
+  .hidden{display:none !important;}
+
+  .coll-row{
+    display:grid;
+    grid-template-columns:1fr 2fr auto;
+    gap:10px;
+    margin-bottom:12px;
+    align-items:start;
+  }
+  .btn-x{
+    font-family:var(--mono);
+    font-size:12px;
+    background:none;
+    border:1px solid var(--rule);
+    color:#8A9098;
+    cursor:pointer;
+    padding:12px 14px;
+    border-radius:2px;
+    min-height:46px;
+  }
+  .btn-x:hover{border-color:var(--alarm);color:var(--alarm);}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    font-weight:700;
+    padding:14px 18px;
+    border-radius:2px;
+    border:1px solid var(--steel);
+    background:var(--steel);
+    color:#fff;
+    cursor:pointer;
+    min-height:48px;
+  }
+  .btn:hover{background:var(--steel-2);}
+  .btn.ghost{background:transparent;color:var(--steel);border-color:var(--rule);}
+  .btn.ghost:hover{background:#EFEFEC;border-color:var(--steel-2);}
+  .btn.primary{background:var(--amber);border-color:var(--amber);}
+  .btn.primary:hover{background:var(--amber-bright);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn.small{padding:10px 14px;font-size:11px;min-height:42px;}
+
+  .actions{
+    margin:26px 0 10px;
+    padding:18px;
+    background:var(--card);
+    border:1px solid var(--rule);
+  }
+  .actions .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .actions .row .spacer{flex:1;}
+  .blockers{
+    background:var(--alarm-bg);
+    border:1px solid #E3BEBA;
+    border-left:4px solid var(--alarm);
+    padding:12px 14px;
+    margin-bottom:16px;
+    font-size:14px;
+  }
+  .blockers strong{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--alarm);
+    margin-bottom:6px;
+  }
+  .blockers ul{margin:0;padding-left:20px;}
+  .blockers li{margin-bottom:3px;}
+  .blockers.clear{
+    background:#F0F6F1;
+    border-color:#BFD7C6;
+    border-left-color:var(--ready);
+  }
+  .blockers.clear strong{color:var(--ready);}
+
+  /* ---------- output ---------- */
+  #output{margin-top:22px;display:none;}
+  #output.show{display:block;}
+  .out-head{
+    background:var(--steel);
+    color:#fff;
+    padding:13px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .out-head strong{font-size:14px;font-weight:650;}
+  .out-head .spacer{flex:1;}
+  #prompt-text{
+    width:100%;
+    min-height:320px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    line-height:1.55;
+    border:1px solid var(--rule);
+    border-top:none;
+    padding:14px;
+    background:#fff;
+    border-radius:0;
+  }
+  .copied{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.09em;
+    color:#8BE0A8;
+    text-transform:uppercase;
+  }
+
+  /* ---------- reference ---------- */
+  details.ref{
+    background:var(--card);
+    border:1px solid var(--rule);
+    margin-bottom:12px;
+  }
+  details.ref summary{
+    padding:16px 18px;
+    cursor:pointer;
+    font-family:var(--mono);
+    font-size:11.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:var(--steel);
+    list-style:none;
+    min-height:48px;
+  }
+  details.ref summary::-webkit-details-marker{display:none;}
+  details.ref summary::before{content:"+ ";color:var(--amber);}
+  details.ref[open] summary::before{content:"\2013 ";}
+  details.ref .ref-body{padding:0 18px 20px;font-size:14.5px;}
+  details.ref code{
+    display:block;
+    font-family:var(--mono);
+    font-size:12px;
+    background:#F4F4F1;
+    border-left:3px solid var(--rule);
+    padding:9px 11px;
+    margin:8px 0;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+  details.ref p.q{
+    font-style:italic;
+    color:#3E464E;
+    border-left:3px solid var(--amber);
+    padding-left:12px;
+    margin:6px 0 14px;
+  }
+  .verbs{font-family:var(--mono);font-size:12.5px;line-height:2;color:#3E464E;}
+
+  h2.sec-title{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    color:#6C747C;
+    margin:36px 0 14px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--rule);
+    scroll-margin-top:90px;
+  }
+
+  footer.note{
+    margin-top:30px;
+    font-size:13.5px;
+    color:#6C747C;
+    border-top:1px solid var(--rule);
+    padding-top:16px;
+  }
+
+  /* ---------- print ---------- */
+  #printview{display:none;}
+
+  @media print{
+    body{background:#fff;}
+    .masthead,.opsec,.gauge,.actions,#output,.ref,h2.sec-title,footer.note,.no-print,.callout{display:none !important;}
+    section.block{display:none !important;}
+    #printview{display:block;}
+    @page{margin:0.55in;}
+  }
+  #printview h1{font-size:17px;margin:0 0 2px;letter-spacing:-.01em;}
+  #printview .pv-sub{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#555;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:14px;}
+  #printview .pv-sec{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;background:#EDEDEA;padding:4px 7px;margin:14px 0 8px;border-left:3px solid #000;page-break-after:avoid;}
+  #printview .pv-item{margin-bottom:9px;page-break-inside:avoid;}
+  #printview .pv-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:#444;}
+  #printview .pv-label .r{color:#000;font-weight:700;}
+  #printview .pv-val{font-size:12.5px;border-bottom:1px solid #BBB;min-height:17px;padding:2px 0;white-space:pre-wrap;}
+  #printview .pv-val.blank{border-bottom:1px dotted #999;min-height:30px;}
+  #printview .pv-foot{margin-top:18px;border-top:1px solid #000;padding-top:7px;font-size:9.5px;color:#555;font-family:var(--mono);}
+
+  @media (max-width:660px){
+    .grid2{grid-template-columns:1fr;}
+    .coll-row{grid-template-columns:1fr;}
+    .block-head .hint{display:none;}
+    .gauge{padding:10px 12px;gap:10px;}
+    .gauge-label{flex-basis:100%;}
+    .actions .row .btn{flex:1 1 100%;}
+    .actions .row .spacer{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;scroll-behavior:auto !important;}
+  }
+
+  .demobar{
+    background:#2F6B45;
+    color:#fff;
+    padding:12px clamp(14px,4vw,20px);
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.06em;
+    text-align:center;
+  }
+  .demobar strong{letter-spacing:.12em;text-transform:uppercase;}
+  @media print{.demobar{display:none !important;}}
+</style>
+</head>
+<body>
+
+<div class="demobar"><strong>Demo copy</strong> &mdash; prefilled with fictional sample data for EMN1 Vasquez. Hit "Generate prompt" to see the output. Do not distribute this version.</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">Interactive Training Group</p>
+    <h1>E-6 Brag Sheet &amp; Eval Prompt Builder</h1>
+    <p class="lede">Fill this out with real numbers, then generate a prompt you can hand to an AI chat to draft your Block 43 narrative. Print the blank or completed sheet at any time.</p>
+    <a class="helpjump" href="#reference"><strong>Stuck on wording?</strong> Bullet examples, a verb bank, follow-up prompts, and common mistakes are at the bottom of this page.</a>
+    <p class="formref">NAVPERS 1616/26 (Rev 05-2025) &nbsp;&middot;&nbsp; Block 43 Comments on Performance &nbsp;&middot;&nbsp; MMN1 / EMN1 / ETN1</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="opsec">
+    <h2>Before you type anything</h2>
+    <ul>
+      <li><strong>Nothing classified, NNPI, or CUI.</strong> No plant parameters, no design data, no casualty response procedures, no operational schedules.</li>
+      <li><strong>Keep technical detail generic.</strong> "Propulsion plant trainer," "casualty control drill set," "watch station qualification." Don't describe what the drill actually was.</li>
+      <li><strong>Counts are fine.</strong> Students trained, boards conducted, quals signed, hours delivered. Plant <em>conditions</em> are not.</li>
+      <li><strong>Use your own device.</strong> Then hand-type the finished narrative into NAVFIT98A.</li>
+      <li>If you can't describe something without crossing a line, write that bullet yourself.</li>
+    </ul>
+    <label class="ack">
+      <input type="checkbox" id="ack">
+      <span>I understand what does not go into a commercial AI chat.</span>
+    </label>
+  </div>
+
+  <div class="gauge">
+    <span class="gauge-label">Brag sheet readiness</span>
+    <div class="segments" id="segments"></div>
+    <span class="gauge-state" id="gauge-state">Empty</span>
+    <p class="gauge-note" id="gauge-note">A thin sheet produces a generic eval. Fields marked <span class="num-flag">needs a number</span> carry the most weight.</p>
+  </div>
+
+  <p class="callout">Fields with a red bar and <span class="req-star">*</span> are required to generate the prompt. Everything else is optional &mdash; skip anything that doesn't apply to you.</p>
+
+  <h2 class="sec-title">Worksheet</h2>
+
+  <!-- 01 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">01</span>
+      <h3>Identification</h3>
+      <span class="hint">Who you are and what you do here</span>
+    </div>
+    <div class="block-body">
+      <div class="grid2">
+        <div class="field">
+          <label for="f_rate">Rate<span class="req-star">*</span></label>
+          <select id="f_rate" data-field data-req data-section="Identification" data-label="Rate">
+            <option value="">Select your rate</option>
+            <option value="MMN1">MMN1 &mdash; Machinist's Mate (Nuclear)</option>
+            <option value="EMN1">EMN1 &mdash; Electrician's Mate (Nuclear)</option>
+            <option value="ETN1">ETN1 &mdash; Electronics Technician (Nuclear)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f_name">Last name</label>
+          <input type="text" id="f_name" data-field data-section="Identification" data-label="Last name" placeholder="Optional" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_billet">Primary billet or title<span class="req-star">*</span></label>
+        <input type="text" id="f_billet" data-field data-req data-section="Identification" data-label="Primary billet" placeholder="e.g., Staff Instructor / Watch Section Leader" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f_next">What you're ready for next
+          <span class="sub">Feeds the closing line. LPO, instructor duty, a specific billet.</span>
+        </label>
+        <input type="text" id="f_next" data-field data-section="Identification" data-label="Ready for next" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">02</span>
+      <h3>Watchstanding &amp; qualifications</h3>
+      <span class="hint">Trainer availability you generated</span>
+    </div>
+    <div class="block-body">
+      <div class="field">
+        <label for="f_quals">Watch stations qualified<span class="req-star">*</span></label>
+        <input type="text" id="f_quals" data-field data-req data-section="Watchstanding" data-label="Watch stations qualified" placeholder="List them" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f_ews">Engineering Watch Supervisor qualified?<span class="req-star">*</span>
+          <span class="sub">EWS qualification drives whether the narrative closes with a Chief Petty Officer recommendation.</span>
+        </label>
+        <select id="f_ews" data-field data-req data-section="Watchstanding" data-label="EWS qualified">
+          <option value="">Select one</option>
+          <option value="Yes">Yes &mdash; EWS qualified</option>
+          <option value="In progress">In progress / in the pipeline</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+      <div class="field hidden" id="cpo-wrap">
+        <label for="f_cpo">Closing Chief Petty Officer statement
+          <span class="sub">Pick the wording your chain of command supports. It will appear verbatim as the last line.</span>
+        </label>
+        <select id="f_cpo" data-field data-section="Watchstanding" data-label="CPO closing statement">
+          <option value="HIGHLY RECOMMENDED FOR CHIEF PETTY OFFICER.">Highly recommended for Chief Petty Officer</option>
+          <option value="HAS MY RECOMMENDATION FOR CHIEF PETTY OFFICER.">Has my recommendation for Chief Petty Officer</option>
+          <option value="A STRONG CANDIDATE FOR CHIEF PETTY OFFICER.">A strong candidate for Chief Petty Officer</option>
+          <option value="">Leave the CPO statement out</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="f_stood">Stations stood this period <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_stood" data-field data-num data-section="Watchstanding" data-label="Stations stood this period" placeholder="Station and number of watches" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f_watchct">Total watches stood <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_watchct" data-field data-num data-section="Watchstanding" data-label="Total watches stood" placeholder="e.g., 62" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_newqual">New qualifications earned this period
+          <span class="sub">Note how far ahead of the pipeline, if it applies.</span>
+        </label>
+        <textarea id="f_newqual" data-field data-section="Watchstanding" data-label="New qualifications earned"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">03</span>
+      <h3>Leadership &amp; mentoring</h3>
+      <span class="hint">This becomes your first bullet</span>
+    </div>
+    <div class="block-body">
+      <p class="callout">The narrative opens on leadership, so this section carries more weight than anything else on the sheet. Be specific about who you developed and what happened to them.</p>
+      <div class="field">
+        <label for="f_lead">Your strongest leadership or mentoring accomplishment<span class="req-star">*</span>
+          <span class="sub">Who did you lead or develop, how many, and what was the outcome?</span>
+        </label>
+        <textarea id="f_lead" data-field data-req data-section="Leadership and mentoring" data-label="Lead leadership/mentoring accomplishment"></textarea>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="f_qualified">Personnel you qualified or signed off <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_qualified" data-field data-num data-section="Leadership and mentoring" data-label="Personnel qualified or signed off" placeholder="Count and what" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f_mentored">Personnel mentored <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_mentored" data-field data-num data-section="Leadership and mentoring" data-label="Personnel mentored" placeholder="e.g., 6" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_results">What happened to your people
+          <span class="sub">Advancements, qualifications completed, SOQ/SOY, awards.</span>
+        </label>
+        <textarea id="f_results" data-field data-section="Leadership and mentoring" data-label="Results among your people"></textarea>
+      </div>
+      <div class="field">
+        <label for="f_climate">Climate, EO, or command culture contributions
+          <span class="sub">Often the weakest trait on a technical sailor's eval. Don't skip it.</span>
+        </label>
+        <textarea id="f_climate" data-field data-section="Leadership and mentoring" data-label="Climate / EO contributions"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">04</span>
+      <h3>Technical knowledge &amp; expertise</h3>
+      <span class="hint">Professional Knowledge trait</span>
+    </div>
+    <div class="block-body">
+      <div class="field">
+        <label for="f_sme">Systems or subject areas you're the go-to for<span class="req-star">*</span>
+          <span class="sub">Keep it generic &mdash; system category, not design detail.</span>
+        </label>
+        <textarea id="f_sme" data-field data-req data-section="Technical knowledge" data-label="Subject matter expertise"></textarea>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="f_lok">Level-of-knowledge or exam scores <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_lok" data-field data-num data-section="Technical knowledge" data-label="Level-of-knowledge / exam scores" placeholder="Your scores, or the average you beat" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f_tshoot">Troubleshooting or casualty response contributions <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_tshoot" data-field data-num data-section="Technical knowledge" data-label="Troubleshooting / casualty response" placeholder="Counts and outcomes only" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_procs">Procedure, publication, or reference expertise
+          <span class="sub">Procedures you wrote, revised, corrected, or are the recognized authority on.</span>
+        </label>
+        <textarea id="f_procs" data-field data-section="Technical knowledge" data-label="Procedure / publication expertise"></textarea>
+      </div>
+      <div class="field">
+        <label for="f_teach">Technical knowledge you passed on
+          <span class="sub">Knowledge gaps you found and closed for others.</span>
+        </label>
+        <textarea id="f_teach" data-field data-section="Technical knowledge" data-label="Technical knowledge transferred"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">05</span>
+      <h3>Training delivery</h3>
+      <span class="hint">The bulk of the site's events</span>
+    </div>
+    <div class="block-body">
+      <div class="grid2">
+        <div class="field">
+          <label for="f_events">Events instructed or led <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_events" data-field data-num data-reqgroup="throughput" data-section="Training delivery" data-label="Events instructed or led" placeholder="Type and count" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f_students">Personnel trained <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_students" data-field data-num data-reqgroup="throughput" data-section="Training delivery" data-label="Personnel trained" placeholder="e.g., 148" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f_hours">Hours of instruction delivered <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_hours" data-field data-num data-section="Training delivery" data-label="Hours of instruction delivered" placeholder="e.g., 210" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f_lessons">Lesson plans written or revised <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_lessons" data-field data-num data-section="Training delivery" data-label="Lesson plans written or revised" placeholder="e.g., 9" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_scenarios">Drill sets or scenarios developed and executed
+          <span class="sub">Counts, not content.</span>
+        </label>
+        <textarea id="f_scenarios" data-field data-section="Training delivery" data-label="Drill sets or scenarios"></textarea>
+      </div>
+      <div class="field">
+        <label for="f_rates">Pass rates, exam averages, throughput <span class="num-flag">needs a number</span>
+          <span class="sub">The most persuasive thing you can put on this sheet.</span>
+        </label>
+        <textarea id="f_rates" data-field data-num data-section="Training delivery" data-label="Pass rates / exam averages / throughput"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">06</span>
+      <h3>OCTG support</h3>
+      <span class="hint">Oral checkouts and boards</span>
+    </div>
+    <div class="block-body">
+      <div class="grid2">
+        <div class="field">
+          <label for="f_orals">Oral checkouts conducted <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_orals" data-field data-num data-reqgroup="throughput" data-section="OCTG support" data-label="Oral checkouts conducted" placeholder="e.g., 74" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f_newstu">Newly reported students processed <span class="num-flag">needs a number</span></label>
+          <input type="text" id="f_newstu" data-field data-num data-section="OCTG support" data-label="Newly reported students processed" placeholder="e.g., 31" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_boardres">Board results worth citing
+          <span class="sub">First-attempt pass rate, gaps identified, time returned to the crews.</span>
+        </label>
+        <textarea id="f_boardres" data-field data-section="OCTG support" data-label="Board results"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">07</span>
+      <h3>Programs, inspections, process</h3>
+      <span class="hint">What you own and what it scored</span>
+    </div>
+    <div class="block-body">
+      <div class="field">
+        <label for="f_programs">Programs you own</label>
+        <input type="text" id="f_programs" data-field data-section="Programs and process" data-label="Programs owned" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f_audit">Inspection or audit results, discrepancies found and corrected <span class="num-flag">needs a number</span></label>
+        <textarea id="f_audit" data-field data-num data-section="Programs and process" data-label="Inspection / audit results"></textarea>
+      </div>
+      <div class="field">
+        <label for="f_improve">Process improvements and what they saved <span class="num-flag">needs a number</span>
+          <span class="sub">Man-hours, rework, dollars, days off a schedule.</span>
+        </label>
+        <textarea id="f_improve" data-field data-num data-section="Programs and process" data-label="Process improvements and savings"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">08</span>
+      <h3>Earlier in the reporting period</h3>
+      <span class="hint">Only if you transferred in mid-cycle</span>
+    </div>
+    <div class="block-body">
+      <p class="callout">Skip this whole section if you were at ITG the entire period. If you came from another division partway through, that work still belongs on this eval &mdash; and it's the part people most often leave off.</p>
+      <div class="grid2">
+        <div class="field">
+          <label for="f_prevdiv">Previous division or command</label>
+          <input type="text" id="f_prevdiv" data-field data-section="Earlier in the period" data-label="Previous division or command" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f_prevtime">How much of the period you were there</label>
+          <input type="text" id="f_prevtime" data-field data-section="Earlier in the period" data-label="Portion of period in previous division" placeholder="e.g., first 5 months" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_prevrole">Billet or role you held there</label>
+        <input type="text" id="f_prevrole" data-field data-section="Earlier in the period" data-label="Previous billet or role" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f_prevwork">What you accomplished there <span class="num-flag">needs a number</span>
+          <span class="sub">Same rules: action, scope, result. Numbers wherever you have them.</span>
+        </label>
+        <textarea id="f_prevwork" data-field data-num data-section="Earlier in the period" data-label="Accomplishments in previous division"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">09</span>
+      <h3>Collateral duties</h3>
+      <span class="hint">Add a row for each</span>
+    </div>
+    <div class="block-body">
+      <div id="coll-list"></div>
+      <button type="button" class="btn ghost small" id="add-coll">+ Add a duty</button>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">10</span>
+      <h3>Education &amp; command involvement</h3>
+      <span class="hint">Supports bearing and initiative</span>
+    </div>
+    <div class="block-body">
+      <div class="field">
+        <label for="f_edu">Courses, credits, certifications, NEC earned</label>
+        <textarea id="f_edu" data-field data-section="Education and involvement" data-label="Education / certifications"></textarea>
+      </div>
+      <div class="field">
+        <label for="f_comm">FCPOA, volunteer hours, events coordinated <span class="num-flag">needs a number</span></label>
+        <textarea id="f_comm" data-field data-num data-section="Education and involvement" data-label="Community and command involvement"></textarea>
+      </div>
+      <div class="field">
+        <label for="f_pfa">Most recent PFA
+          <span class="sub">Not used in the narrative &mdash; noted here so it's on the sheet when you sit down with your chain.</span>
+        </label>
+        <input type="text" id="f_pfa" data-field data-section="Education and involvement" data-label="Most recent PFA" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="block">
+    <div class="block-head">
+      <span class="idx">11</span>
+      <h3>Output settings</h3>
+      <span class="hint">Match your command's template</span>
+    </div>
+    <div class="block-body">
+      <div class="grid2">
+        <div class="field">
+          <label for="f_lines">Available lines in Block 43</label>
+          <select id="f_lines">
+            <option value="18" selected>18 lines</option>
+            <option value="16">16 lines</option>
+            <option value="20">20 lines</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f_chars">Characters per line</label>
+          <select id="f_chars">
+            <option value="91" selected>91 characters</option>
+            <option value="92">92 characters</option>
+            <option value="95">95 characters</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="actions no-print">
+    <div class="blockers" id="blockers"></div>
+    <div class="row">
+      <button type="button" class="btn primary" id="gen" disabled>Generate prompt</button>
+      <button type="button" class="btn ghost" id="printbtn">Print brag sheet</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="save">Save draft</button>
+      <button type="button" class="btn ghost" id="loadbtn">Load draft</button>
+      <input type="file" id="loadfile" accept=".json,application/json" style="display:none">
+      <button type="button" class="btn ghost" id="clear">Clear</button>
+    </div>
+  </div>
+
+  <div id="output">
+    <div class="out-head">
+      <strong>Your prompt</strong>
+      <span class="spacer"></span>
+      <span class="copied" id="copied"></span>
+      <button type="button" class="btn small" id="copy">Copy</button>
+    </div>
+    <textarea id="prompt-text" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+  </div>
+
+  <h2 class="sec-title" id="reference">Help &amp; reference</h2>
+
+  <details class="ref">
+    <summary>Follow-up prompts for the second pass</summary>
+    <div class="ref-body">
+      <p>The first draft is a starting point. Run these next.</p>
+      <p class="q">Too long. Cut it to the line limit by removing the weakest bullet entirely. Do not shorten by deleting numbers.</p>
+      <p class="q">The opening leadership bullet is weak. Rewrite it to show me developing people rather than doing the work myself. Here's more detail: &hellip;</p>
+      <p class="q">Strip every adjective that isn't doing work. Rewrite with harder verbs and keep every number.</p>
+      <p class="q">Read this as a selection board member with 90 seconds. What's the weakest bullet, and what would make me skip this record?</p>
+      <p class="q">List every factual claim in this narrative. Flag anything you inferred rather than something I told you directly.</p>
+      <p class="q">Give me 3 alternate opening lines, all leading with leadership.</p>
+    </div>
+  </details>
+
+  <details class="ref">
+    <summary>ITG bullet skeletons</summary>
+    <div class="ref-body">
+      <p><strong>Leadership and mentoring &mdash; your first bullet</strong></p>
+      <code>- DEVELOPS SAILORS. MENTORED [N] JUNIOR PERSONNEL; [N] ADVANCED IN RATE, [N] COMPLETED WATCH QUALIFICATION, [N] EARNED [RECOGNITION].</code>
+      <code>- LED FROM THE FRONT. SUPERVISED A [N]-PERSON WATCH SECTION THROUGH [N] EVOLUTIONS WITH ZERO PROCEDURAL COMPLIANCE DISCREPANCIES.</code>
+      <p><strong>Technical knowledge</strong></p>
+      <code>- RECOGNIZED EXPERT. SOUGHT OUT SITE-WIDE FOR [SYSTEM AREA] KNOWLEDGE; RESOLVED [N] TECHNICAL QUESTIONS AND CORRECTED [N] PROCEDURAL ERRORS BEFORE THEY REACHED STUDENTS.</code>
+      <code>- MASTERED THE MATERIAL. SCORED [N]% ON LEVEL-OF-KNOWLEDGE EXAMINATIONS, [N] POINTS ABOVE THE DIVISION AVERAGE.</code>
+      <p><strong>Watchstanding and trainer operations</strong></p>
+      <code>- SUPERIOR WATCHSTANDER. STOOD [N] WATCHES AS [STATION] ACROSS [N] EVOLUTIONS, ENABLING [N] HOURS OF TRAINER AVAILABILITY FOR [N] STUDENT CREWS.</code>
+      <code>- PLANT EXPERT. QUALIFIED [STATION] IN [N] WEEKS, [N] MONTHS AHEAD OF PIPELINE, IMMEDIATELY FILLING A CRITICAL WATCH SECTION GAP.</code>
+      <p><strong>Training delivery</strong></p>
+      <code>- MASTER INSTRUCTOR. DELIVERED [N] HOURS OF INSTRUCTION TO [N] PERSONNEL ACROSS [N] EVENTS; STUDENT EXAM AVERAGE OF [N]% EXCEEDED SITE STANDARD.</code>
+      <code>- BUILT THE CURRICULUM. AUTHORED AND VALIDATED [N] LESSON PLANS AND [N] DRILL SCENARIOS NOW USED SITE-WIDE, ELIMINATING [N] HOURS OF ANNUAL REWORK.</code>
+      <p><strong>OCTG support</strong></p>
+      <code>- PIPELINE ENABLER. CONDUCTED [N] ORAL CHECKOUTS FOR NEWLY REPORTED STUDENTS IN DIRECT SUPPORT OF OCTG, RETURNING [N] QUALIFIED WATCHSTANDERS TO THEIR CREWS ON SCHEDULE.</code>
+      <code>- STANDARD BEARER. SAT [N] QUALIFICATION BOARDS, IDENTIFIED [N] KNOWLEDGE GAPS, AND DROVE REMEDIATION THAT RAISED FIRST-ATTEMPT PASS RATE TO [N]%.</code>
+      <p><strong>Earlier in the period, if you transferred in</strong></p>
+      <code>- IMPACT FROM DAY ONE. PRIOR TO REPORTING, SERVED AS [ROLE] IN [DIVISION], WHERE [ACTION] DELIVERED [RESULT].</code>
+      <p><strong>Programs and collateral duties</strong></p>
+      <code>- PROGRAM OWNER. MANAGED THE [PROGRAM] FOR [N] PERSONNEL; [N] EVOLUTIONS EXECUTED WITH ZERO DISCREPANCIES ON [INSPECTION].</code>
+      <code>- FIXED THE PROCESS. IDENTIFIED AND CORRECTED [PROBLEM], SAVING [N] MAN-HOURS PER [PERIOD].</code>
+      <p><strong>Closers</strong></p>
+      <code>- READY NOW. ASSIGN AS [BILLET]. HIGHLY RECOMMENDED FOR CHIEF PETTY OFFICER.</code>
+      <code>- PERFORMING ABOVE PAYGRADE. ASSIGN TO [BILLET] AND CONTINUE TO CHALLENGE.</code>
+    </div>
+  </details>
+
+  <details class="ref">
+    <summary>Verb bank</summary>
+    <div class="ref-body">
+      <p>Use these instead of "was responsible for" or "assisted with."</p>
+      <p class="verbs">ADVANCED &middot; AUTHORED &middot; BOARDED &middot; BUILT &middot; CERTIFIED &middot; CONDUCTED &middot; CORRECTED &middot; DELIVERED &middot; DEVELOPED &middot; DIRECTED &middot; DROVE &middot; ELIMINATED &middot; ENABLED &middot; EXECUTED &middot; IDENTIFIED &middot; IMPLEMENTED &middot; INSTRUCTED &middot; LED &middot; MANAGED &middot; MENTORED &middot; OVERHAULED &middot; QUALIFIED &middot; REDESIGNED &middot; RESOLVED &middot; REVISED &middot; SPEARHEADED &middot; STANDARDIZED &middot; SUPERVISED &middot; TRAINED &middot; VALIDATED</p>
+    </div>
+  </details>
+
+  <details class="ref">
+    <summary>How this goes wrong</summary>
+    <div class="ref-body">
+      <ul>
+        <li><strong>Fabricated numbers.</strong> The fastest way to get a record questioned. If you don't know it, go find it. The prompt tells the AI to flag gaps instead of guessing &mdash; don't override that.</li>
+        <li><strong>Duties instead of results.</strong> "Stood watch as EWS" is a job description. "Stood 47 watches as EWS, enabling 312 hours of trainer availability" is an eval bullet.</li>
+        <li><strong>Everyone's eval reading the same.</strong> Differentiation comes from this worksheet, not the prompt. Thin inputs, generic output.</li>
+        <li><strong>Leaving off the first half of the year.</strong> If you transferred in mid-cycle, section 08 is not optional for you.</li>
+        <li><strong>Ignoring the soft traits.</strong> An all-technical narrative leaves Climate/EO and Military Bearing unsupported, and those marks won't defend.</li>
+        <li><strong>Skipping the proofread.</strong> You sign it. You own it.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="ref">
+    <summary>Using this on a phone or tablet</summary>
+    <div class="ref-body">
+      <ul>
+        <li><strong>Save draft</strong> downloads a small file you can reopen later with <strong>Load draft</strong>. On iPhone it lands in Files or the share sheet; on Android it goes to Downloads.</li>
+        <li>Nothing is stored in the browser, so closing the tab loses your work. Save a draft before you walk away.</li>
+        <li><strong>Print brag sheet</strong> opens your device's print dialog &mdash; pick a printer, or choose "Save as PDF" to email it to yourself.</li>
+        <li>If <strong>Copy</strong> doesn't work in your browser, tap into the prompt box, select all, and copy by hand.</li>
+      </ul>
+    </div>
+  </details>
+
+  <footer class="note">
+    The AI drafts, you verify. Confirm line count against your command's NAVFIT98A template before you commit. Ranking, summary group standing, and the EP/MP/P promotion recommendation are set by your chain of command and are deliberately left off this sheet.
+  </footer>
+
+</div>
+
+<div id="printview"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var ack = document.getElementById('ack');
+  var genBtn = document.getElementById('gen');
+  var output = document.getElementById('output');
+  var promptText = document.getElementById('prompt-text');
+  var collList = document.getElementById('coll-list');
+  var blockers = document.getElementById('blockers');
+  var ewsSel = document.getElementById('f_ews');
+  var cpoWrap = document.getElementById('cpo-wrap');
+  var cpoSel = document.getElementById('f_cpo');
+
+  function closestField(el){
+    var n = el;
+    while (n && n !== document.body){
+      if (n.className && (' ' + n.className + ' ').indexOf(' field ') > -1) return n;
+      n = n.parentNode;
+    }
+    return null;
+  }
+
+  /* ---------- collateral duty rows ---------- */
+  function addCollRow(duty, detail){
+    var row = document.createElement('div');
+    row.className = 'coll-row';
+
+    var a = document.createElement('input');
+    a.type = 'text';
+    a.placeholder = 'Duty (e.g., CFL, UPC, FCPOA VP)';
+    a.className = 'coll-duty';
+    a.setAttribute('autocomplete','off');
+    a.value = duty || '';
+
+    var b = document.createElement('input');
+    b.type = 'text';
+    b.placeholder = 'What you did and the result \u2014 with numbers';
+    b.className = 'coll-detail';
+    b.setAttribute('autocomplete','off');
+    b.value = detail || '';
+
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'btn-x';
+    x.textContent = 'Remove';
+    x.addEventListener('click', function(){
+      row.parentNode.removeChild(row);
+      refresh();
+    });
+
+    a.addEventListener('input', refresh);
+    b.addEventListener('input', refresh);
+
+    row.appendChild(a); row.appendChild(b); row.appendChild(x);
+    collList.appendChild(row);
+  }
+  addCollRow();
+  document.getElementById('add-coll').addEventListener('click', function(){ addCollRow(); });
+
+  function collaterals(){
+    var out = [];
+    var rows = collList.querySelectorAll('.coll-row');
+    for (var i = 0; i < rows.length; i++){
+      var d = rows[i].querySelector('.coll-duty').value.trim();
+      var t = rows[i].querySelector('.coll-detail').value.trim();
+      if (d || t) out.push({duty:d, detail:t});
+    }
+    return out;
+  }
+
+  /* ---------- data collection ---------- */
+  function fields(){
+    var els = document.querySelectorAll('[data-field]');
+    var out = [];
+    for (var i = 0; i < els.length; i++){
+      var el = els[i];
+      out.push({
+        el: el,
+        id: el.id,
+        section: el.getAttribute('data-section'),
+        label: el.getAttribute('data-label'),
+        needsNum: el.hasAttribute('data-num'),
+        required: el.hasAttribute('data-req'),
+        group: el.getAttribute('data-reqgroup'),
+        value: el.value.trim()
+      });
+    }
+    return out;
+  }
+
+  /* ---------- EWS conditional ---------- */
+  function syncCpo(){
+    if (ewsSel.value === 'Yes') cpoWrap.classList.remove('hidden');
+    else cpoWrap.classList.add('hidden');
+  }
+  ewsSel.addEventListener('change', function(){ syncCpo(); refresh(); });
+
+  /* ---------- readiness gauge ---------- */
+  var SEGS = 14;
+  var segWrap = document.getElementById('segments');
+  for (var s = 0; s < SEGS; s++){
+    var d = document.createElement('span');
+    d.className = 'seg';
+    segWrap.appendChild(d);
+  }
+  var segEls = segWrap.querySelectorAll('.seg');
+
+  function hasDigit(v){ return /\d/.test(v); }
+
+  /* ---------- required-field check ---------- */
+  function requirements(){
+    var f = fields();
+    var missing = [];
+    var groups = {};
+
+    for (var i = 0; i < f.length; i++){
+      var item = f[i];
+      var wrapper = closestField(item.el);
+
+      if (item.group){
+        if (!groups[item.group]) groups[item.group] = {filled:false, els:[]};
+        groups[item.group].els.push(wrapper);
+        if (item.value) groups[item.group].filled = true;
+        continue;
+      }
+
+      if (!item.required || !wrapper) continue;
+
+      if (item.value){
+        wrapper.className = wrapper.className.replace(/\s*needs/g,'');
+        if (wrapper.className.indexOf('filled-req') === -1) wrapper.className += ' filled-req';
+      } else {
+        wrapper.className = wrapper.className.replace(/\s*filled-req/g,'');
+        if (wrapper.className.indexOf('needs') === -1) wrapper.className += ' needs';
+        missing.push(item.label);
+      }
+    }
+
+    for (var g in groups){
+      var grp = groups[g];
+      for (var j = 0; j < grp.els.length; j++){
+        var w = grp.els[j];
+        if (!w) continue;
+        w.className = w.className.replace(/\s*needs/g,'').replace(/\s*filled-req/g,'');
+        w.className += grp.filled ? ' filled-req' : ' needs';
+      }
+      if (!grp.filled) missing.push('At least one of: events instructed, personnel trained, or oral checkouts conducted');
+    }
+
+    if (!ack.checked) missing.push('Acknowledge the notice at the top of the page');
+
+    return missing;
+  }
+
+  function refresh(){
+    var f = fields();
+    var score = 0, max = 0, quantified = 0, numFields = 0;
+    for (var i = 0; i < f.length; i++){
+      if (f[i].el === cpoSel) continue;
+      var weight = f[i].needsNum ? 2 : 1;
+      max += weight;
+      if (f[i].value) score += weight;
+      if (f[i].needsNum){
+        numFields++;
+        if (hasDigit(f[i].value)) quantified++;
+      }
+    }
+    var c = collaterals();
+    max += 2;
+    if (c.length) score += 2;
+
+    var pct = max ? score / max : 0;
+    var lit = Math.round(pct * SEGS);
+    var strong = pct >= 0.7 && quantified >= Math.ceil(numFields * 0.6);
+
+    for (var j = 0; j < SEGS; j++){
+      segEls[j].className = 'seg' + (j < lit ? ' on' : '') + (j < lit && strong ? ' strong' : '');
+    }
+
+    var state = document.getElementById('gauge-state');
+    var note = document.getElementById('gauge-note');
+    var label, msg;
+
+    if (pct === 0){
+      label = 'Empty';
+      msg = 'A thin sheet produces a generic eval. Fields marked "needs a number" carry the most weight.';
+    } else if (pct < 0.3){
+      label = 'Thin';
+      msg = 'Not enough here yet to beat a boilerplate eval. ' + quantified + ' of ' + numFields + ' number fields have figures in them.';
+    } else if (pct < 0.55){
+      label = 'Developing';
+      msg = quantified + ' of ' + numFields + ' number fields are quantified. Numbers are what separate your eval from everyone else\u2019s.';
+    } else if (!strong){
+      label = 'Solid';
+      msg = 'Good coverage. Now go back and put figures in the rest \u2014 ' + quantified + ' of ' + numFields + ' number fields are quantified.';
+    } else {
+      label = 'Strong';
+      msg = 'Well documented: ' + quantified + ' of ' + numFields + ' number fields quantified.';
+    }
+    state.textContent = label;
+    state.style.color = strong ? 'var(--ready)' : (pct > 0 ? 'var(--amber)' : '#8A9098');
+    note.textContent = msg;
+
+    var missing = requirements();
+    genBtn.disabled = missing.length > 0;
+
+    if (missing.length){
+      blockers.className = 'blockers';
+      var html = '<strong>Required before you can generate</strong><ul>';
+      for (var m = 0; m < missing.length; m++){
+        html += '<li>' + String(missing[m]).replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</li>';
+      }
+      blockers.innerHTML = html + '</ul>';
+    } else {
+      blockers.className = 'blockers clear';
+      blockers.innerHTML = '<strong>Ready to generate</strong>Everything required is filled in. Optional fields you skipped simply won\u2019t appear in the prompt.';
+    }
+  }
+
+  var allInputs = document.querySelectorAll('[data-field]');
+  for (var k = 0; k < allInputs.length; k++){
+    allInputs[k].addEventListener('input', refresh);
+    allInputs[k].addEventListener('change', refresh);
+  }
+  ack.addEventListener('change', refresh);
+  syncCpo();
+  refresh();
+
+  /* ---------- prompt builder ---------- */
+  function buildPrompt(){
+    var f = fields();
+    var lines = document.getElementById('f_lines').value;
+    var chars = document.getElementById('f_chars').value;
+    var ewsQual = ewsSel.value === 'Yes';
+    var cpoLine = ewsQual ? cpoSel.value : '';
+
+    var sheet = [];
+    var currentSection = null;
+    for (var i = 0; i < f.length; i++){
+      if (f[i].id === 'f_pfa' || f[i].id === 'f_cpo') continue;
+      if (!f[i].value) continue;
+      if (f[i].section !== currentSection){
+        currentSection = f[i].section;
+        sheet.push('');
+        sheet.push('[' + currentSection.toUpperCase() + ']');
+      }
+      sheet.push(f[i].label + ': ' + f[i].value);
+    }
+
+    var c = collaterals();
+    if (c.length){
+      sheet.push('');
+      sheet.push('[COLLATERAL DUTIES]');
+      for (var j = 0; j < c.length; j++){
+        sheet.push(c[j].duty + ': ' + c[j].detail);
+      }
+    }
+
+    var prevWork = document.getElementById('f_prevwork').value.trim() ||
+                   document.getElementById('f_prevdiv').value.trim();
+
+    var p = [];
+    p.push('ROLE');
+    p.push('You are a seasoned U.S. Navy Chief Petty Officer with a nuclear-trained background who has');
+    p.push('written and screened hundreds of enlisted evaluations. You know NAVPERS 1616/26 and');
+    p.push('BUPERSINST 1610.10H conventions cold, and you know how selection boards read Block 43.');
+    p.push('');
+    p.push('TASK');
+    p.push('Write the Block 43 "Comments on Performance" narrative for the First Class Petty Officer');
+    p.push('described below.');
+    p.push('');
+    p.push('FORMAT RULES - FOLLOW EXACTLY');
+    p.push('1. ALL CAPS throughout.');
+    p.push('2. Fit within ' + lines + ' lines at approximately ' + chars + ' characters per line. Count as you go and');
+    p.push('   report the line count at the end. If it runs long, cut the weakest bullet, not the numbers.');
+    p.push('3. Bullet format: a hyphen, a two-to-five word CAPITALIZED lead-in ending in a period, then');
+    p.push('   one to three sentences of substance.');
+    p.push('   Shape:  - EXPERT WATCHSTANDER. [ACTION] [SCOPE/NUMBER] [RESULT/IMPACT].');
+    p.push('4. Every bullet follows ACTION -> SCOPE -> IMPACT. Never state a duty without a result.');
+    p.push('5. Use numerals for all numbers. Use every figure I have given you.');
+    p.push('6. Avoid pronouns. Start with a verb, or use the rate and last name.');
+    p.push('7. NEVER INVENT A NUMBER, AWARD, QUALIFICATION, OR EVENT. If a bullet would be stronger with');
+    p.push('   data I did not provide, write [NEED NUMBER] in the text and list what you need at the end.');
+    p.push('   Do not estimate, round up, or fill gaps with plausible-sounding detail.');
+    p.push('8. Do NOT write a ranking statement (no "#2 OF 11") and do NOT assign a promotion');
+    p.push('   recommendation tier (no EARLY PROMOTE / MUST PROMOTE / PROMOTABLE). Those belong to the');
+    p.push('   reporting senior.');
+    p.push('9. No classified, NNPI, or CUI content. Keep technical references generic. If anything I have');
+    p.push('   given you looks like it should not be in a commercial AI chat, tell me before writing.');
+    p.push('10. Plain, hard language. No "consummate professional," no "tireless dedication," no');
+    p.push('    "unmatched," no stacked adjectives. Verbs and results.');
+    p.push('');
+    p.push('STRUCTURE');
+    p.push('- Line 1: A short opening line establishing what this Sailor is and the scope of the impact.');
+    p.push('- FIRST BULLET: MUST be leadership or mentoring. This is mandatory. Lead with people');
+    p.push('  developed and what happened to them, not with technical work.');
+    p.push('- Second bullet: technical knowledge and professional expertise.');
+    p.push('- Remaining bullets: 3 to 4 more, strongest first, drawn from watchstanding, training');
+    p.push('  delivery, OCTG support, programs, and collateral duties as the material supports.');
+
+    if (prevWork){
+      p.push('- Include one bullet covering the portion of the reporting period spent in the previous');
+      p.push('  division, and make clear it occurred earlier in the period. Do not let it displace the');
+      p.push('  leadership bullet from the first position.');
+    }
+
+    p.push('- Final line: the closing statement described below.');
+    p.push('');
+    p.push('CLOSING STATEMENT - MANDATORY');
+
+    if (ewsQual && cpoLine){
+      p.push('This Sailor is a qualified Engineering Watch Supervisor. The narrative MUST close with a');
+      p.push('Chief Petty Officer recommendation. The final line must contain this exact sentence, word');
+      p.push('for word:');
+      p.push('    ' + cpoLine);
+      p.push('You may precede it on the same line with a short forward-looking phrase naming the next');
+      p.push('billet this Sailor is ready for. Do not soften, reword, or qualify that sentence.');
+    } else if (ewsQual){
+      p.push('This Sailor is a qualified Engineering Watch Supervisor, but no Chief Petty Officer');
+      p.push('statement was authorized. Close on readiness for increased responsibility and name the');
+      p.push('specific next billet. Do not write a Chief Petty Officer recommendation.');
+    } else if (ewsSel.value === 'In progress'){
+      p.push('This Sailor is in the Engineering Watch Supervisor qualification pipeline but is not yet');
+      p.push('qualified. Do NOT write a Chief Petty Officer recommendation. Close on qualification');
+      p.push('progress and readiness for increased responsibility, naming the specific next billet.');
+    } else {
+      p.push('This Sailor is not Engineering Watch Supervisor qualified. Do NOT write a Chief Petty');
+      p.push('Officer recommendation. Close on readiness for increased responsibility and name the');
+      p.push('specific next billet.');
+    }
+
+    p.push('');
+    p.push('TRAIT COVERAGE');
+    p.push('The narrative must supply evidence for these seven graded traits. Tell me at the end which');
+    p.push('traits are thinly supported so I can go find more material:');
+    p.push('  1. PROFESSIONAL KNOWLEDGE');
+    p.push('  2. QUALITY OF WORK');
+    p.push('  3. COMMAND OR ORGANIZATIONAL CLIMATE / EQUAL OPPORTUNITY');
+    p.push('  4. MILITARY BEARING / CHARACTER');
+    p.push('  5. PERSONAL JOB ACCOMPLISHMENT / INITIATIVE');
+    p.push('  6. TEAMWORK');
+    p.push('  7. LEADERSHIP');
+    p.push('');
+    p.push('COMMAND CONTEXT - USE THIS TO FRAME IMPACT');
+    p.push('The member is a nuclear-trained First Class Petty Officer (MMN1, EMN1, or ETN1) assigned to an');
+    p.push('Interactive Training Group (ITG). ITG operates and stands watch on land-based propulsion plant');
+    p.push('trainers, executes the majority of the site\u2019s training events, and supports the Off Crew');
+    p.push('Training Group (OCTG) by conducting oral checkouts and boards for newly reported students.');
+    p.push('Impact at ITG is measured in watchstanders qualified, students trained and boarded, training');
+    p.push('events executed, instruction hours delivered, trainer availability and watch coverage, exam and');
+    p.push('board pass rates, lesson material developed, and pipeline throughput - students returned to');
+    p.push('their crews qualified and on time. Frame accomplishments as fleet readiness generated, not');
+    p.push('tasks completed. A bullet about qualifying watchstanders is really a bullet about crews that');
+    p.push('can get underway.');
+    p.push('');
+    p.push('MEMBER INFORMATION');
+    p.push(sheet.join('\n').replace(/^\n+/, ''));
+    p.push('');
+    p.push('DELIVERABLES');
+    p.push('1. The Block 43 narrative, formatted as above.');
+    p.push('2. Line count, and whether it fits.');
+    p.push('3. The specific data points you need from me to replace any [NEED NUMBER] tags.');
+    p.push('4. A one-line note on which of the seven traits are weakly supported.');
+    p.push('5. Two alternate opening leadership bullets.');
+    p.push('');
+    p.push('If what I have given you is too thin to write a credible eval, say so and ask me targeted');
+    p.push('questions instead of writing something generic.');
+
+    return p.join('\n');
+  }
+
+  genBtn.addEventListener('click', function(){
+    promptText.value = buildPrompt();
+    output.className = 'show';
+    try {
+      if (output.scrollIntoView) output.scrollIntoView({behavior:'smooth', block:'start'});
+    } catch(e){
+      try { output.scrollIntoView(); } catch(e2){}
+    }
+  });
+
+  /* ---------- copy, with fallback for iOS and file:// ---------- */
+  document.getElementById('copy').addEventListener('click', function(){
+    var flag = document.getElementById('copied');
+    function ok(){ flag.textContent = 'Copied'; setTimeout(function(){ flag.textContent = ''; }, 2200); }
+    function manual(){ flag.textContent = 'Select and copy'; }
+
+    function legacy(){
+      try {
+        promptText.focus();
+        promptText.setSelectionRange(0, promptText.value.length);
+        if (document.execCommand('copy')) ok(); else manual();
+      } catch(e){ manual(); }
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
+      navigator.clipboard.writeText(promptText.value).then(ok, legacy);
+    } else {
+      legacy();
+    }
+  });
+
+  /* ---------- print view ---------- */
+  function buildPrintView(){
+    var pv = document.getElementById('printview');
+    pv.innerHTML = '';
+
+    var f = fields();
+    var nm = document.getElementById('f_name').value.trim();
+    var rt = document.getElementById('f_rate').value.trim();
+
+    var h = document.createElement('h1');
+    h.textContent = 'E-6 Brag Sheet' + ((rt || nm) ? ' \u2014 ' + (rt + ' ' + nm).replace(/\s+/g,' ').trim() : '');
+    pv.appendChild(h);
+
+    var sub = document.createElement('div');
+    sub.className = 'pv-sub';
+    sub.textContent = 'Interactive Training Group \u00b7 NAVPERS 1616/26 Block 43 worksheet \u00b7 Printed ' +
+      new Date().toLocaleDateString();
+    pv.appendChild(sub);
+
+    var currentSection = null;
+    for (var i = 0; i < f.length; i++){
+      if (f[i].el === cpoSel && ewsSel.value !== 'Yes') continue;
+      if (f[i].section !== currentSection){
+        currentSection = f[i].section;
+        var sh = document.createElement('div');
+        sh.className = 'pv-sec';
+        sh.textContent = currentSection;
+        pv.appendChild(sh);
+      }
+      var item = document.createElement('div');
+      item.className = 'pv-item';
+      var lab = document.createElement('div');
+      lab.className = 'pv-label';
+      lab.textContent = f[i].label;
+      if (f[i].required){
+        var star = document.createElement('span');
+        star.className = 'r';
+        star.textContent = ' *';
+        lab.appendChild(star);
+      }
+      if (f[i].needsNum && !f[i].value){
+        lab.appendChild(document.createTextNode('  \u2014 include a number'));
+      }
+      var val = document.createElement('div');
+      val.className = 'pv-val' + (f[i].value ? '' : ' blank');
+      val.textContent = f[i].value;
+      item.appendChild(lab); item.appendChild(val);
+      pv.appendChild(item);
+    }
+
+    var ch = document.createElement('div');
+    ch.className = 'pv-sec';
+    ch.textContent = 'Collateral duties';
+    pv.appendChild(ch);
+
+    var c = collaterals();
+    var rows = c.length ? c : [{duty:'', detail:''}, {duty:'', detail:''}, {duty:'', detail:''}];
+    for (var j = 0; j < rows.length; j++){
+      var ci = document.createElement('div');
+      ci.className = 'pv-item';
+      var cl = document.createElement('div');
+      cl.className = 'pv-label';
+      cl.textContent = rows[j].duty ? rows[j].duty : 'Duty / what you did / result';
+      var cv = document.createElement('div');
+      cv.className = 'pv-val' + (rows[j].detail ? '' : ' blank');
+      cv.textContent = rows[j].detail;
+      ci.appendChild(cl); ci.appendChild(cv);
+      pv.appendChild(ci);
+    }
+
+    var foot = document.createElement('div');
+    foot.className = 'pv-foot';
+    foot.textContent = '* required to generate the prompt. No classified, NNPI, or CUI content. Ranking, summary group standing, and promotion recommendation are set by the chain of command.';
+    pv.appendChild(foot);
+  }
+
+  document.getElementById('printbtn').addEventListener('click', function(){
+    buildPrintView();
+    window.print();
+  });
+  window.addEventListener('beforeprint', buildPrintView);
+
+  /* ---------- save / load ---------- */
+  document.getElementById('save').addEventListener('click', function(){
+    var data = {version:2, fields:{}, collaterals:collaterals(),
+                lines:document.getElementById('f_lines').value,
+                chars:document.getElementById('f_chars').value};
+    var f = fields();
+    for (var i = 0; i < f.length; i++) data.fields[f[i].id] = f[i].value;
+
+    var nm = (document.getElementById('f_name').value.trim() || 'bragsheet').replace(/[^A-Za-z0-9_-]/g,'_');
+    var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = nm + '_brag_sheet.json';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  });
+
+  document.getElementById('loadbtn').addEventListener('click', function(){
+    document.getElementById('loadfile').click();
+  });
+
+  document.getElementById('loadfile').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var data;
+      try { data = JSON.parse(ev.target.result); }
+      catch(err){ alert('That file is not a saved brag sheet.'); return; }
+      if (!data || !data.fields){ alert('That file is not a saved brag sheet.'); return; }
+
+      for (var id in data.fields){
+        var el = document.getElementById(id);
+        if (el) el.value = data.fields[id];
+      }
+      if (data.lines) document.getElementById('f_lines').value = data.lines;
+      if (data.chars) document.getElementById('f_chars').value = data.chars;
+
+      collList.innerHTML = '';
+      var c = data.collaterals || [];
+      if (!c.length) addCollRow();
+      for (var i = 0; i < c.length; i++) addCollRow(c[i].duty, c[i].detail);
+
+      syncCpo();
+      refresh();
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById('clear').addEventListener('click', function(){
+    if (!confirm('Clear everything on this sheet? Save a draft first if you want to keep it.')) return;
+    var els = document.querySelectorAll('[data-field]');
+    for (var i = 0; i < els.length; i++){
+      if (els[i].tagName === 'SELECT') els[i].selectedIndex = 0;
+      else els[i].value = '';
+    }
+    collList.innerHTML = '';
+    addCollRow();
+    output.className = '';
+    promptText.value = '';
+    syncCpo();
+    refresh();
+    window.scrollTo(0, 0);
+  });
+
+})();
+</script>
+
+<script>
+/* ---- DEMO PREFILL: fictional sample data, not real ---- */
+(function(){
+  var SAMPLE = {
+    f_rate:  'EMN1',
+    f_name:  'Vasquez',
+    f_billet:'Staff Instructor and Watch Section Leader, Electrical Division',
+    f_next:  'Division LPO; ready for a sea-going Engineering Department Leading Petty Officer billet',
+
+    f_quals: 'Engineering Watch Supervisor, Electrical Operator, Shutdown Roving Watch, Instructor',
+    f_ews:   'Yes',
+    f_stood: '58 watches as Engineering Watch Supervisor, 21 as Electrical Operator',
+    f_watchct:'79',
+    f_newqual:'Completed Engineering Watch Supervisor qualification in 11 weeks, roughly 6 weeks ahead of the standard pipeline, filling a gap that had left one watch section short.',
+
+    f_lead:  'Took over a watch section of 9 personnel that was 3 qualifications short and behind on continuing training. Built individual qualification plans for each member, ran weekly progress checks, and qualified all 3 within 4 months. Section finished the period fully qualified with no missed watch commitments.',
+    f_qualified:'14 personnel signed off across 22 watch station qualification cards',
+    f_mentored:'7',
+    f_results:'3 of 7 mentees advanced in rate this cycle; 2 earned Instructor qualification; 1 selected as Division Sailor of the Quarter.',
+    f_climate:'Served on the command Sailor of the Quarter board twice. Ran 4 division all-hands sessions on career development and advancement planning after the last command climate survey flagged low awareness of advancement resources.',
+
+    f_sme:   'Electrical distribution and switchgear operations, electrical casualty response fundamentals, and instructor-side troubleshooting methodology. Routinely called by other divisions for electrical-side questions during event planning.',
+    f_lok:   'Averaged 94% on level-of-knowledge examinations, 9 points above the division average of 85%',
+    f_tshoot:'Diagnosed and resolved 11 trainer fidelity discrepancies that would have taught incorrect indications; recovered 3 training events that would otherwise have been scrubbed',
+    f_procs: 'Rewrote 4 outdated electrical section procedures and corrected 17 technical errors during the annual lesson material review.',
+    f_teach: 'Identified a recurring student knowledge gap in electrical casualty indications and built a 45-minute remediation brief now delivered to every incoming class.',
+
+    f_events:'63 training events instructed or led',
+    f_students:'186',
+    f_hours: '247',
+    f_lessons:'11',
+    f_scenarios:'Developed 8 casualty control drill sets and validated 14 existing scenarios for the electrical portion of the qualification syllabus.',
+    f_rates: 'Students in events he led averaged 91% on end-of-event examinations against a site standard of 80%. Zero event cancellations attributable to instructor availability.',
+
+    f_orals: '88',
+    f_newstu:'34',
+    f_boardres:'First-attempt oral checkout pass rate rose from 71% to 89% after he standardized the question bank and pre-board expectations brief. Returned 34 students to their crews on or ahead of schedule.',
+
+    f_programs:'Division Training Petty Officer; Electrical Qualification Program',
+    f_audit: 'Zero discrepancies on the annual training records audit; identified and corrected 23 record deficiencies across the division before the audit window.',
+    f_improve:'Rebuilt the qualification tracking process from paper routing to a single shared tracker, cutting roughly 6 man-hours per week of administrative effort and eliminating 3 missed sign-off deadlines per month.',
+
+    f_prevdiv:'Reactor Controls Division',
+    f_prevtime:'first 4 months of the reporting period',
+    f_prevrole:'Watch Supervisor and Divisional Training Petty Officer',
+    f_prevwork:'Supervised a 6-person watch team through 40 evolutions with zero procedural compliance discrepancies, and closed out 19 overdue maintenance items inherited from the previous rotation.',
+
+    f_edu:   'Completed 9 semester hours toward a Bachelor of Science in Nuclear Engineering Technology (3.8 GPA). Earned Master Training Specialist qualification.',
+    f_comm:  'FCPOA Vice President. Coordinated 5 command events and logged 40 volunteer hours across 3 community projects.',
+    f_pfa:   'Overall Excellent, most recent cycle'
+  };
+
+  var COLL = [
+    {duty:'Command Fitness Leader Assistant',
+     detail:'Ran 2 official PFA cycles for 112 personnel with zero administrative discrepancies; coached 4 members off the FEP roster.'},
+    {duty:'FCPOA Vice President',
+     detail:'Organized 5 events and a fundraiser that raised $2,100 supporting command morale and 2 Sailor recognition programs.'},
+    {duty:'Urinalysis Program Coordinator',
+     detail:'Executed 14 collection evolutions covering 340 specimens with zero chain-of-custody discrepancies.'}
+  ];
+
+  function fire(el){
+    ['input','change'].forEach(function(t){
+      var e;
+      try { e = new Event(t, {bubbles:true}); }
+      catch(err){ e = document.createEvent('Event'); e.initEvent(t, true, false); }
+      el.dispatchEvent(e);
+    });
+  }
+
+  window.addEventListener('load', function(){
+    for (var id in SAMPLE){
+      var el = document.getElementById(id);
+      if (el){ el.value = SAMPLE[id]; fire(el); }
+    }
+
+    var ack = document.getElementById('ack');
+    ack.checked = true;
+    fire(ack);
+
+    // collateral duties
+    var list = document.getElementById('coll-list');
+    var addBtn = document.getElementById('add-coll');
+    var rows = list.querySelectorAll('.coll-row');
+    while (rows.length < COLL.length){
+      addBtn.click();
+      rows = list.querySelectorAll('.coll-row');
+    }
+    for (var i = 0; i < COLL.length; i++){
+      var duty = rows[i].querySelector('.coll-duty');
+      var det  = rows[i].querySelector('.coll-detail');
+      duty.value = COLL[i].duty; fire(duty);
+      det.value  = COLL[i].detail; fire(det);
+    }
+  });
+})();
+</script>
+</body>
+</html>
