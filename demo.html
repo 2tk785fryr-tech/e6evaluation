@@ -484,7 +484,16 @@
   #printview{display:none;}
 
   @media print{
-    html,body{background:#fff !important;}
+    /* WebKit discards printed content past the first page when an ancestor
+       clips overflow. body has overflow-x:hidden for mobile, so it must be
+       released here or Safari silently drops later pages. */
+    html,body{
+      background:#fff !important;
+      overflow:visible !important;
+      height:auto !important;
+      max-height:none !important;
+    }
+    #printview,#printview *{overflow:visible !important;}
     .masthead,.opsec,.gauge,.actions,#output,.ref,h2.sec-title,footer.note,.no-print,.callout{display:none !important;}
     section.block{display:none !important;}
     .wrap{padding:0 !important;max-width:none !important;}
@@ -1627,8 +1636,10 @@
      blocks into explicit page containers, and give each page its own
      header and footer carrying the Sailor's name.                        */
 
-  var PRINT_USABLE_IN = 9.15;   // 11in page - 1in margins - room for the
-                                // browser's own URL/page-number strip
+  var PRINT_USABLE_IN = 8.55;   // 11in page - 1in margins - room for the
+                                // browser's own URL/page-number strips.
+                                // Deliberately conservative: an extra page is
+                                // cosmetic, an overflowing page loses content.
   var PX_PER_IN = 96;
 
   function buildPrintView(){
