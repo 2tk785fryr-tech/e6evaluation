@@ -263,6 +263,20 @@
     padding-right:34px;
   }
   textarea{resize:vertical;min-height:76px;}
+
+  /* WebKit sizes date inputs to their content, so they come out narrower
+     than the text fields beside them unless forced. */
+  input[type=date]{
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    min-height:46px;
+    text-align:left;
+  }
+  input[type=date]::-webkit-date-and-time-value{ text-align:left; width:100%; }
+  input[type=date]::-webkit-datetime-edit{ padding:0; }
+  input[type=date]::-webkit-calendar-picker-indicator{ margin-left:auto; opacity:.55; }
   input[type=text]:focus, input[type=date]:focus, textarea:focus, select:focus{
     outline:2px solid var(--amber);
     outline-offset:-1px;
@@ -1534,7 +1548,10 @@
     if (!data || !data.fields) return false;
     for (var id in data.fields){
       var el = document.getElementById(id);
-      if (el) el.value = data.fields[id];
+      if (!el) continue;
+      // never let an empty saved value wipe a defaulted date
+      if (!data.fields[id] && (id === 'f_lasteval' || id === 'f_endeval')) continue;
+      el.value = data.fields[id];
     }
     if (data.lines) document.getElementById('f_lines').value = data.lines;
     if (data.chars) document.getElementById('f_chars').value = data.chars;
@@ -1575,6 +1592,7 @@
     try { data = JSON.parse(raw); } catch(e){ return; }
     if (applyData(data)){
       syncCpo();
+      updatePeriod();
       refresh();
       saveTag.className = 'autosave';
       saveTag.textContent = 'Draft restored';
@@ -1650,6 +1668,25 @@
     var prevWork = document.getElementById('f_prevwork').value.trim() ||
                    document.getElementById('f_prevdiv').value.trim();
 
+    // Time in the seat only matters to a board when the Sailor arrived during the
+    // period being reported on. Otherwise it is worksheet trivia and stays out.
+    var periodStart = parseDate(startEl.value);
+    var periodEnd   = parseDate(endEl.value);
+    var gainedDate  = parseDate(gainEl.value);
+    var reportDate  = parseDate(repEl.value);
+    var arrivedMidPeriod = null;
+    if (periodStart && periodEnd){
+      var arrival = null, where = '';
+      if (gainedDate && gainedDate > periodStart){ arrival = gainedDate; where = 'gained to ITG'; }
+      else if (reportDate && reportDate > periodStart){ arrival = reportDate; where = 'reported to the command'; }
+      if (arrival){
+        var inSeat = monthsBetween(arrival, periodEnd);
+        if (inSeat !== null && inSeat >= 0 && inSeat < 12){
+          arrivedMidPeriod = {months: inSeat, where: where, date: fmtDate(arrival)};
+        }
+      }
+    }
+
     var p = [];
     p.push('ROLE');
     p.push('You are a seasoned U.S. Navy Chief Petty Officer with a nuclear-trained background who has');
@@ -1705,6 +1742,17 @@
     }
     p.push('');
     p.push('Closing statement. One sentence. See the wording rules below.');
+    if (arrivedMidPeriod){
+      p.push('');
+      p.push('TIME IN THE SEAT - THIS ONE APPLIES');
+      p.push('This Sailor ' + arrivedMidPeriod.where + ' on ' + arrivedMidPeriod.date + ', roughly ' +
+             arrivedMidPeriod.months + ' months before the end of the reporting period.');
+      p.push('Because the record below was built in that short a time, say so once, in the');
+      p.push('opening statement or the strongest bullet - something to the effect of "in only ' +
+             arrivedMidPeriod.months + ' months".');
+      p.push('Do not repeat it and do not use it as an excuse for thin material. If the record is');
+      p.push('not strong, leave the timeframe out entirely.');
+    }
     p.push('');
     p.push('ALTERNATE BULLET');
     p.push('After the finished write-up, under a heading "Alternate bullet", give ONE additional');
@@ -2390,7 +2438,10 @@
 
       for (var id in data.fields){
         var el = document.getElementById(id);
-        if (el) el.value = data.fields[id];
+        if (!el) continue;
+        // never let an empty saved value wipe a defaulted date
+        if (!data.fields[id] && (id === 'f_lasteval' || id === 'f_endeval')) continue;
+        el.value = data.fields[id];
       }
       if (data.lines) document.getElementById('f_lines').value = data.lines;
       if (data.chars) document.getElementById('f_chars').value = data.chars;
@@ -2408,6 +2459,8 @@
     };
     reader.readAsText(file);
   });
+
+  window.addEventListener('load', function(){ updatePeriod(); });
 
   document.getElementById('clear').addEventListener('click', function(){
     if (!confirm('Clear everything on this sheet? Save a draft first if you want to keep it.')) return;
