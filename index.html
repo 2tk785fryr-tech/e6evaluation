@@ -1024,7 +1024,8 @@
     <div class="blockers" id="blockers"></div>
     <div class="row">
       <button type="button" class="btn primary" id="gen" disabled>Generate prompt</button>
-      <button type="button" class="btn ghost" id="printbtn">Print brag sheet</button>
+      <button type="button" class="btn ghost" id="pdfbtn">Brag sheet PDF</button>
+      <button type="button" class="btn ghost" id="printbtn">Print</button>
       <span class="spacer"></span>
       <button type="button" class="btn ghost" id="save">Save draft</button>
       <button type="button" class="btn ghost" id="loadbtn">Load draft</button>
@@ -1621,6 +1622,302 @@
     }
   });
 
+
+  /* ================= PDF brag sheet =================
+     Browser print engines disagree about pagination — iOS Safari in
+     particular drops content after a forced page break. So the brag sheet
+     is written as a real PDF here instead: we control the page breaks,
+     the bytes are identical on every device, and nothing can be clipped. */
+
+  var HELV_W  = [278,278,355,556,556,889,667,222,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,222,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  var HELVB_W = [278,333,474,556,556,889,722,278,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,278,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+
+  function textWidth(str, size, bold){
+    var t = bold ? HELVB_W : HELV_W, total = 0;
+    for (var i = 0; i < str.length; i++){
+      var c = str.charCodeAt(i);
+      total += (c >= 32 && c <= 126) ? t[c - 32] : 500;
+    }
+    return total * size / 1000;
+  }
+
+  function pdfEscape(s){
+    return s.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+  }
+
+  // strip anything outside WinAnsi-safe ASCII so the PDF never shows mojibake
+  function asciiize(s){
+    return String(s)
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2013\u2014]/g, '-')
+      .replace(/\u00b7/g, '-')
+      .replace(/[^\x20-\x7E\n]/g, '');
+  }
+
+  function wrapText(str, size, bold, maxW){
+    str = asciiize(str);
+    var out = [];
+    var paras = str.split('\n');
+    for (var p = 0; p < paras.length; p++){
+      var words = paras[p].split(/\s+/).filter(Boolean);
+      if (!words.length){ out.push(''); continue; }
+      var line = '';
+      for (var i = 0; i < words.length; i++){
+        var word = words[i];
+        // hard-break a single word longer than the column
+        while (textWidth(word, size, bold) > maxW && word.length > 1){
+          var cut = word.length;
+          while (cut > 1 && textWidth(word.slice(0, cut), size, bold) > maxW) cut--;
+          if (line) { out.push(line); line = ''; }
+          out.push(word.slice(0, cut));
+          word = word.slice(cut);
+        }
+        var trial = line ? line + ' ' + word : word;
+        if (textWidth(trial, size, bold) <= maxW){ line = trial; }
+        else { if (line) out.push(line); line = word; }
+      }
+      if (line) out.push(line);
+    }
+    return out;
+  }
+
+  function buildBragSheetPDF(){
+    // ---- page geometry, in points ----
+    var PW = 612, PH = 792;              // US Letter
+    var M  = 40;                          // margin
+    var CW = PW - M * 2;                  // content width
+    var COL_GAP = 14;
+    var HALF = (CW - COL_GAP) / 2;
+
+    var S_NAME = 13, S_META = 6.5, S_SEC = 7.5, S_LAB = 6.5, S_VAL = 8.5, S_FOOT = 6.5;
+    var LH_VAL = S_VAL * 1.28, LH_LAB = S_LAB * 1.25;
+
+    var f = fields();
+    var nm = document.getElementById('f_name').value.trim();
+    var rt = document.getElementById('f_rate').value.trim();
+    var who = (rt + ' ' + nm).replace(/\s+/g,' ').trim();
+    var stamp = new Date().toLocaleDateString();
+
+    var anyData = false;
+    for (var a = 0; a < f.length; a++){
+      if (f[a].el === cpoSel && ewsSel.value !== 'Yes') continue;
+      if (f[a].value){ anyData = true; break; }
+    }
+    if (!anyData && collaterals().length) anyData = true;
+
+    // ---- flatten into drawable blocks with known heights ----
+    var blocks = [];
+
+    function labelValueBlock(label, value, required, w){
+      var labLines = wrapText(label + (required ? ' *' : ''), S_LAB, false, w);
+      var valLines = value ? wrapText(value, S_VAL, false, w) : [];
+      var h = labLines.length * LH_LAB + 2 +
+              (valLines.length ? valLines.length * LH_VAL : 16) + 7;
+      return {type:'lv', lab:labLines, val:valLines, w:w, h:h, blank:!value};
+    }
+
+    var currentSection = null, pending = null;
+
+    function pushPair(left, right){
+      blocks.push({type:'pair', left:left, right:right,
+                   h: Math.max(left.h, right ? right.h : 0)});
+    }
+    function flush(){
+      if (pending){ pushPair(pending, null); pending = null; }
+    }
+
+    for (var i = 0; i < f.length; i++){
+      var item = f[i];
+      if (item.el === cpoSel && ewsSel.value !== 'Yes') continue;
+      if (anyData && !item.value) continue;
+
+      if (item.section !== currentSection){
+        flush();
+        currentSection = item.section;
+        blocks.push({type:'sec', text:asciiize(currentSection).toUpperCase(), h:15});
+      }
+
+      var wide = anyData ? (item.value.length > 58) : (item.el.tagName === 'TEXTAREA');
+      if (wide){
+        flush();
+        blocks.push({type:'single', item:labelValueBlock(item.label, item.value, item.required, CW),
+                     h:0});
+        blocks[blocks.length-1].h = blocks[blocks.length-1].item.h;
+      } else if (pending){
+        pushPair(pending, labelValueBlock(item.label, item.value, item.required, HALF));
+        pending = null;
+      } else {
+        pending = labelValueBlock(item.label, item.value, item.required, HALF);
+      }
+    }
+    flush();
+
+    var c = collaterals();
+    if (c.length || !anyData){
+      blocks.push({type:'sec', text:'COLLATERAL DUTIES', h:15});
+      var rows = c.length ? c : [{duty:'',detail:''},{duty:'',detail:''},{duty:'',detail:''}];
+      for (var j = 0; j < rows.length; j++){
+        var blk = labelValueBlock(rows[j].duty || 'DUTY / WHAT YOU DID / RESULT',
+                                  rows[j].detail, false, CW);
+        blocks.push({type:'single', item:blk, h:blk.h});
+      }
+    }
+
+    // ---- paginate ----
+    var HEAD_H = 30, FOOT_H = 22;
+    var top = PH - M - HEAD_H;
+    var bottom = M + FOOT_H;
+    var avail = top - bottom;
+
+    var pages = [[]], used = 0;
+    for (var b = 0; b < blocks.length; b++){
+      var blk2 = blocks[b];
+      var need = blk2.h;
+      // keep a section heading with at least its first block
+      if (blk2.type === 'sec' && blocks[b+1]) need += blocks[b+1].h;
+      if (used + need > avail && pages[pages.length-1].length){
+        pages.push([]); used = 0;
+      }
+      pages[pages.length-1].push(blk2);
+      used += blk2.h;
+    }
+
+    // ---- draw ----
+    var contents = [];
+    for (var pi = 0; pi < pages.length; pi++){
+      var ops = [];
+      var y = PH - M;
+
+      function txt(s, x, yy, size, bold){
+        ops.push('BT /' + (bold ? 'F2' : 'F1') + ' ' + size + ' Tf ' +
+                 x.toFixed(2) + ' ' + yy.toFixed(2) + ' Td (' +
+                 pdfEscape(asciiize(s)) + ') Tj ET');
+      }
+      function line(x1,y1,x2,y2,wid,gray){
+        ops.push((gray===undefined?0.6:gray) + ' G ' + wid + ' w ' +
+                 x1.toFixed(2)+' '+y1.toFixed(2)+' m '+x2.toFixed(2)+' '+y2.toFixed(2)+' l S');
+      }
+
+      // header
+      txt(who ? ('E-6 Brag Sheet - ' + who) : 'E-6 Brag Sheet - Name: ______________________',
+          M, y - S_NAME, S_NAME, true);
+      y -= S_NAME + 3;
+      txt('ITG - NAVPERS 1616/26 BLOCK 43 WORKSHEET - ' + stamp + ' - NO CLASSIFIED, NNPI, OR CUI',
+          M, y - S_META, S_META, false);
+      y -= S_META + 5;
+      line(M, y, PW - M, y, 1.2, 0);
+      y -= 8;
+
+      function drawLV(blk, x, yy){
+        var yc = yy;
+        for (var k = 0; k < blk.lab.length; k++){
+          txt(blk.lab[k].toUpperCase(), x, yc - S_LAB, S_LAB, false);
+          yc -= LH_LAB;
+        }
+        yc -= 2;
+        if (blk.val.length){
+          for (var v = 0; v < blk.val.length; v++){
+            txt(blk.val[v], x, yc - S_VAL, S_VAL, false);
+            yc -= LH_VAL;
+          }
+        } else {
+          yc -= 16;
+        }
+        line(x, yc - 1.5, x + blk.w, yc - 1.5, 0.4, blk.blank ? 0.75 : 0.6);
+        return yc;
+      }
+
+      for (var q = 0; q < pages[pi].length; q++){
+        var blk3 = pages[pi][q];
+        if (blk3.type === 'sec'){
+          ops.push('0.91 0.91 0.90 rg ' + M + ' ' + (y - 11).toFixed(2) + ' ' +
+                   CW + ' 12 re f');
+          ops.push('0 g ' + M + ' ' + (y - 11).toFixed(2) + ' 2 12 re f');
+          txt(blk3.text, M + 5, y - 8.5, S_SEC, true);
+          y -= 15;
+        } else if (blk3.type === 'single'){
+          drawLV(blk3.item, M, y);
+          y -= blk3.h;
+        } else {
+          drawLV(blk3.left, M, y);
+          if (blk3.right) drawLV(blk3.right, M + HALF + COL_GAP, y);
+          y -= blk3.h;
+        }
+      }
+
+      // footer
+      var fy = M + 12;
+      line(M, fy + 8, PW - M, fy + 8, 0.7, 0);
+      txt(who || 'Name: ____________', M, fy, S_FOOT, true);
+      var wOff = textWidth(who || 'Name: ____________', S_FOOT, true) + 8;
+      txt('* required to generate the prompt. Ranking, summary group standing, and promotion recommendation are set by the chain of command.',
+          M + wOff, fy, S_FOOT, false);
+      var pgLabel = 'Page ' + (pi + 1) + ' of ' + pages.length;
+      txt(pgLabel, PW - M - textWidth(pgLabel, S_FOOT, false), fy, S_FOOT, false);
+
+      contents.push(ops.join('\n'));
+    }
+
+    // ---- assemble the PDF file ----
+    var objs = [];
+    var nPages = contents.length;
+    var kids = [];
+    for (var k2 = 0; k2 < nPages; k2++) kids.push((4 + k2 * 2) + ' 0 R');
+
+    objs[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+    objs[2] = '<< /Type /Pages /Count ' + nPages + ' /Kids [' + kids.join(' ') + '] >>';
+    objs[3] = '<< /Font << /F1 ' + (4 + nPages * 2) + ' 0 R /F2 ' + (5 + nPages * 2) + ' 0 R >> >>';
+    for (var k3 = 0; k3 < nPages; k3++){
+      var pnum = 4 + k3 * 2, cnum = pnum + 1;
+      objs[pnum] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PW + ' ' + PH +
+                   '] /Resources 3 0 R /Contents ' + cnum + ' 0 R >>';
+      objs[cnum] = {stream: contents[k3]};
+    }
+    objs[4 + nPages * 2] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+    objs[5 + nPages * 2] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+
+    var out = '%PDF-1.4\n';
+    var offsets = [];
+    for (var oi = 1; oi < objs.length; oi++){
+      offsets[oi] = out.length;
+      var body = objs[oi];
+      if (body && body.stream !== undefined){
+        out += oi + ' 0 obj\n<< /Length ' + body.stream.length + ' >>\nstream\n' +
+               body.stream + '\nendstream\nendobj\n';
+      } else {
+        out += oi + ' 0 obj\n' + body + '\nendobj\n';
+      }
+    }
+    var xref = out.length;
+    var count = objs.length;
+    out += 'xref\n0 ' + count + '\n0000000000 65535 f \n';
+    for (var xi = 1; xi < count; xi++){
+      out += ('0000000000' + offsets[xi]).slice(-10) + ' 00000 n \n';
+    }
+    out += 'trailer\n<< /Size ' + count + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF';
+
+    var bytes = new Uint8Array(out.length);
+    for (var bi = 0; bi < out.length; bi++) bytes[bi] = out.charCodeAt(bi) & 0xFF;
+    return {blob: new Blob([bytes], {type:'application/pdf'}), pages: nPages};
+  }
+
+  function downloadBragSheetPDF(){
+    var res = buildBragSheetPDF();
+    var nm2 = (document.getElementById('f_name').value.trim() || 'brag-sheet')
+                .replace(/[^A-Za-z0-9_-]/g,'_');
+    var url = URL.createObjectURL(res.blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = nm2 + '_brag_sheet.pdf';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 8000);
+    return res.pages;
+  }
+
   /* ---------- print view ----------
      Pagination is done here in JS instead of relying on the browser.
      Safari, Chrome and Firefox all disagree about repeating table headers
@@ -1826,6 +2123,14 @@
       pv.appendChild(page);
     }
   }
+
+  document.getElementById('pdfbtn').addEventListener('click', function(){
+    try {
+      downloadBragSheetPDF();
+    } catch(e){
+      alert('Could not build the PDF on this device. Use the Print button instead.');
+    }
+  });
 
   document.getElementById('printbtn').addEventListener('click', function(){
     buildPrintView();
