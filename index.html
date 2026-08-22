@@ -1115,6 +1115,7 @@
     <div class="row">
       <button type="button" class="btn primary" id="gen" disabled>Generate prompt</button>
       <button type="button" class="btn ghost" id="pdfbtn">Brag sheet PDF</button>
+      <button type="button" class="btn ghost" id="emailbtn">Email it</button>
       <button type="button" class="btn ghost" id="printbtn">Print</button>
       <span class="spacer"></span>
       <button type="button" class="btn ghost" id="save">Save draft</button>
@@ -2158,14 +2159,22 @@
     return {blob: new Blob([bytes], {type:'application/pdf'}), pages: nPages};
   }
 
+  function bragSheetLabel(){
+    var rt = document.getElementById('f_rate').value.trim();
+    var nm = document.getElementById('f_name').value.trim();
+    var who = (rt + ' ' + nm).replace(/\s+/g,' ').trim();
+    return who ? who + ' Brag Sheet' : 'E-6 Brag Sheet';
+  }
+  function bragSheetFilename(){
+    return bragSheetLabel().replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'') + '.pdf';
+  }
+
   function downloadBragSheetPDF(){
     var res = buildBragSheetPDF();
-    var nm2 = (document.getElementById('f_name').value.trim() || 'brag-sheet')
-                .replace(/[^A-Za-z0-9_-]/g,'_');
     var url = URL.createObjectURL(res.blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = nm2 + '_brag_sheet.pdf';
+    a.download = bragSheetFilename();
     a.rel = 'noopener';
     document.body.appendChild(a);
     a.click();
@@ -2378,6 +2387,53 @@
       page.appendChild(footEl(pnum + 1, pages.length));
       pv.appendChild(page);
     }
+  }
+
+  /* Email handoff.
+     mailto: cannot carry an attachment - it is not in the spec and no browser
+     supports it. The Web Share API can, so on phones we hand the PDF straight to
+     the share sheet and the Sailor picks Mail. On anything without it we download
+     the PDF and open an empty draft with the subject filled in, so they attach the
+     file that just landed. No recipient is ever pre-filled. */
+  document.getElementById('emailbtn').addEventListener('click', function(){
+    var subject = bragSheetLabel();
+    var res, file;
+
+    try {
+      res = buildBragSheetPDF();
+      file = new File([res.blob], bragSheetFilename(), {type:'application/pdf'});
+    } catch(e){
+      alert('Could not build the PDF on this device.');
+      return;
+    }
+
+    var canShareFile = false;
+    try {
+      canShareFile = !!(navigator.canShare && navigator.share && navigator.canShare({files:[file]}));
+    } catch(e){ canShareFile = false; }
+
+    if (canShareFile){
+      navigator.share({
+        files: [file],
+        title: subject,
+        text: subject
+      }).catch(function(err){
+        // user dismissed the sheet, or the platform refused - fall back quietly
+        if (err && err.name === 'AbortError') return;
+        emailFallback(subject);
+      });
+    } else {
+      emailFallback(subject);
+    }
+  });
+
+  function emailFallback(subject){
+    downloadBragSheetPDF();
+    var body = 'The brag sheet PDF has been saved to this device. Attach it to this message before sending.';
+    setTimeout(function(){
+      window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) +
+                             '&body=' + encodeURIComponent(body);
+    }, 700);
   }
 
   document.getElementById('pdfbtn').addEventListener('click', function(){
