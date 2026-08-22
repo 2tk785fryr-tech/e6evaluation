@@ -309,6 +309,39 @@
   }
   .hidden{display:none !important;}
 
+  .period-banner{
+    background:#E7F0F8;
+    border:1px solid #B9D2E6;
+    border-left:5px solid #14568A;
+    color:#0F4670;
+    font-size:15px;
+    font-weight:700;
+    line-height:1.45;
+    padding:13px 15px;
+    margin:0 0 18px;
+    border-radius:2px;
+  }
+  .period-banner .dates{color:#8A2C20;}
+
+  .calc-flag{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:9.5px;
+    letter-spacing:.07em;
+    color:#3E6B4D;
+    border:1px solid #BFD7C6;
+    background:#F0F6F1;
+    padding:1px 5px;
+    margin-left:6px;
+    vertical-align:1px;
+  }
+  input[data-calc]{
+    background:#F1F3F0;
+    color:#3E464E;
+    font-weight:700;
+    cursor:default;
+  }
+
   .coll-row{
     display:grid;
     grid-template-columns:1fr 2fr auto;
@@ -697,19 +730,41 @@
       </div>
       <div class="grid2">
         <div class="field">
-          <label for="f_lasteval">Date of last evaluation</label>
-          <input type="date" id="f_lasteval" data-field data-section="Identification" data-label="Date of last evaluation">
+          <label for="f_lasteval">Date of last evaluation
+            <span class="sub">Defaulted to the normal E-6 period start. If you had a transfer eval or any other eval after that date, change this to the ending date of that evaluation.</span>
+          </label>
+          <input type="date" id="f_lasteval" value="2025-11-15" data-field data-section="Identification" data-label="Date of last evaluation">
         </div>
+        <div class="field">
+          <label for="f_endeval">End of evaluation period</label>
+          <input type="date" id="f_endeval" value="2026-11-15" data-field data-section="Identification" data-label="End of evaluation period">
+        </div>
+      </div>
+
+      <p class="period-banner" id="period-banner"></p>
+
+      <div class="grid2">
         <div class="field">
           <label for="f_reported">Date reported to command</label>
           <input type="date" id="f_reported" data-field data-section="Identification" data-label="Date reported to command">
         </div>
+        <div class="field">
+          <label for="f_gained">Date gained to ITG
+            <span class="sub">Later than the date you reported? The time before it belongs in section 08.</span>
+          </label>
+          <input type="date" id="f_gained" data-field data-section="Identification" data-label="Date gained to ITG">
+        </div>
       </div>
-      <div class="field">
-        <label for="f_gained">Date gained to ITG
-          <span class="sub">If this is later than the date you reported, the time before it belongs in section 08.</span>
-        </label>
-        <input type="date" id="f_gained" data-field data-section="Identification" data-label="Date gained to ITG">
+
+      <div class="grid2">
+        <div class="field">
+          <label for="f_moscmd">Months at command <span class="calc-flag">calculated</span></label>
+          <input type="text" id="f_moscmd" data-field data-calc readonly tabindex="-1" data-section="Identification" data-label="Months at command" placeholder="Enter the date you reported">
+        </div>
+        <div class="field">
+          <label for="f_mositg">Months at ITG <span class="calc-flag">calculated</span></label>
+          <input type="text" id="f_mositg" data-field data-calc readonly tabindex="-1" data-section="Identification" data-label="Months at ITG" placeholder="Enter the date you were gained">
+        </div>
       </div>
     </div>
   </section>
@@ -1316,6 +1371,7 @@
     var score = 0, max = 0, quantified = 0, numFields = 0;
     for (var i = 0; i < f.length; i++){
       if (f[i].el === cpoSel) continue;
+      if (f[i].el.hasAttribute('data-calc')) continue;
       var weight = f[i].needsNum ? 2 : 1;
       max += weight;
       if (f[i].value) score += weight;
@@ -1375,6 +1431,66 @@
       blockers.innerHTML = '<strong>Ready to generate</strong>Everything required is filled in. Optional fields you skipped simply won\u2019t appear in the prompt.';
     }
   }
+
+  /* ---------- evaluation period banner + calculated tenure ---------- */
+  var startEl  = document.getElementById('f_lasteval');
+  var endEl    = document.getElementById('f_endeval');
+  var repEl    = document.getElementById('f_reported');
+  var gainEl   = document.getElementById('f_gained');
+  var mosCmdEl = document.getElementById('f_moscmd');
+  var mosItgEl = document.getElementById('f_mositg');
+  var banner   = document.getElementById('period-banner');
+
+  function parseDate(v){
+    if (!v) return null;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3]);
+  }
+  function fmtDate(d){
+    if (!d) return '';
+    return (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+  }
+  function monthsBetween(a, b){
+    if (!a || !b) return null;
+    var m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+    if (b.getDate() < a.getDate()) m -= 1;
+    return m;
+  }
+  function describeMonths(n){
+    if (n === null) return '';
+    if (n < 0) return 'date is after the end of the period';
+    if (n < 12) return n + (n === 1 ? ' month' : ' months');
+    var y = Math.floor(n / 12), r = n % 12;
+    return n + ' months (' + y + (y === 1 ? ' yr' : ' yrs') +
+           (r ? ' ' + r + ' mo' : '') + ')';
+  }
+
+  function updatePeriod(){
+    var a = parseDate(startEl.value), b = parseDate(endEl.value);
+    if (a && b && b > a){
+      banner.innerHTML = 'Everything you enter below should describe what you did between ' +
+        '<span class="dates">' + fmtDate(a) + '</span> and ' +
+        '<span class="dates">' + fmtDate(b) + '</span>.';
+      banner.style.display = '';
+    } else if (a && b){
+      banner.innerHTML = 'Check these dates \u2014 the end of the period is not after the start.';
+      banner.style.display = '';
+    } else {
+      banner.innerHTML = 'Set both dates above to fix your reporting period.';
+      banner.style.display = '';
+    }
+
+    var end = parseDate(endEl.value);
+    mosCmdEl.value = repEl.value  ? describeMonths(monthsBetween(parseDate(repEl.value), end))  : '';
+    mosItgEl.value = gainEl.value ? describeMonths(monthsBetween(parseDate(gainEl.value), end)) : '';
+  }
+
+  [startEl, endEl, repEl, gainEl].forEach(function(el){
+    el.addEventListener('input', updatePeriod);
+    el.addEventListener('change', updatePeriod);
+  });
+  updatePeriod();
 
   var allInputs = document.querySelectorAll('[data-field]');
   for (var k = 0; k < allInputs.length; k++){
@@ -1504,7 +1620,8 @@
     for (var i = 0; i < f.length; i++){
       if (f[i].id === 'f_pfa' || f[i].id === 'f_cpo') continue;
       // dates are worksheet context for the chain of command, not narrative material
-      if (f[i].id === 'f_lasteval' || f[i].id === 'f_reported' || f[i].id === 'f_gained') continue;
+      if (f[i].id === 'f_lasteval' || f[i].id === 'f_endeval' || f[i].id === 'f_reported' ||
+          f[i].id === 'f_gained'   || f[i].id === 'f_moscmd' || f[i].id === 'f_mositg') continue;
       if (!f[i].value) continue;
       if (f[i].section !== currentSection){
         currentSection = f[i].section;
@@ -2277,6 +2394,7 @@
       for (var i = 0; i < c.length; i++) addCollRow(c[i].duty, c[i].detail);
 
       syncCpo();
+      updatePeriod();
       refresh();
       autosave();
       e.target.value = '';
@@ -2291,8 +2409,11 @@
       if (els[i].tagName === 'SELECT') els[i].selectedIndex = 0;
       else els[i].value = '';
     }
+    startEl.value = '2025-11-15';   // restore the period defaults
+    endEl.value   = '2026-11-15';
     collList.innerHTML = '';
     addCollRow();
+    updatePeriod();
     output.className = '';
     promptText.value = '';
     wipeStore();
