@@ -460,6 +460,12 @@
   .email-steps ol{margin:0;padding-left:20px;font-size:14.5px;color:#123B5C;line-height:1.5;}
   .email-steps li{margin-bottom:5px;}
   .email-steps li:last-child{margin-bottom:0;}
+  .email-steps .steps-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:14px;
+  }
   .email-steps code{
     font-family:var(--mono);
     font-size:12.5px;
@@ -1159,7 +1165,7 @@
       <input type="file" id="loadfile" accept=".json,application/json" style="display:none">
       <button type="button" class="btn ghost" id="clear">Clear</button>
     </div>
-    <p class="action-hint"><strong>Email it</strong> builds the PDF and hands it to your phone's share sheet, where you pick Mail. On a computer the PDF downloads and you attach it yourself. Either way you fill in who it goes to &mdash; no address is pre-filled.</p>
+    <p class="action-hint"><strong>Email it</strong> walks you through it in two steps &mdash; it shows the directions and copies the subject first, then opens the share sheet when you tap continue. The address to send to is posted in the Discord group, not on this page.</p>
     <div class="email-steps" id="email-steps"></div>
   </div>
 
@@ -2435,75 +2441,119 @@
      file that just landed. No recipient is ever pre-filled. */
   var emailSteps = document.getElementById('email-steps');
 
-  function showSteps(title, items){
+  function stepsPanel(title, items, buttons){
     var html = '<h4>' + title + '</h4><ol>';
     for (var i = 0; i < items.length; i++) html += '<li>' + items[i] + '</li>';
-    emailSteps.innerHTML = html + '</ol>';
+    html += '</ol>';
+    if (buttons && buttons.length){
+      html += '<div class="steps-actions">';
+      for (var b = 0; b < buttons.length; b++){
+        html += '<button type="button" class="btn ' + (buttons[b].kind || 'ghost') +
+                ' small" id="' + buttons[b].id + '">' + buttons[b].label + '</button>';
+      }
+      html += '</div>';
+    }
+    emailSteps.innerHTML = html;
     emailSteps.className = 'email-steps show';
     try { emailSteps.scrollIntoView({behavior:'smooth', block:'nearest'}); } catch(e){}
   }
 
+  function copySubject(subject){
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
+        navigator.clipboard.writeText(subject);
+        return true;
+      }
+    } catch(e){}
+    return false;
+  }
+
+  function canShareFiles(){
+    try {
+      if (!(navigator.canShare && navigator.share)) return false;
+      var probe = new File([new Blob(['x'],{type:'application/pdf'})], 'p.pdf', {type:'application/pdf'});
+      return !!navigator.canShare({files:[probe]});
+    } catch(e){ return false; }
+  }
+
+  /* Two steps on purpose: the share sheet covers the whole screen the moment it
+     opens, so the directions have to be read and the subject copied BEFORE it
+     appears. The second button supplies the user gesture navigator.share needs. */
   document.getElementById('emailbtn').addEventListener('click', function(){
     var subject = bragSheetLabel();
-    var res, file;
+    var copied  = copySubject(subject);
+    var sharing = canShareFiles();
 
+    var items = [];
+    items.push('<strong>Get the address from the Discord group.</strong> The email address to send this to is posted there \u2014 it is deliberately not on this page.');
+
+    if (sharing){
+      items.push(copied
+        ? 'Subject <strong>' + subject + '</strong> is copied to your clipboard.'
+        : 'Copy this subject down: <strong>' + subject + '</strong> (your browser blocked the automatic copy).');
+      items.push('Tap <strong>Open share sheet</strong> below, then choose <strong>Mail</strong>.');
+      items.push('The PDF will already be attached as <code>' + bragSheetFilename() + '</code>.');
+      items.push('The subject line comes up blank on iPhone \u2014 tap it and paste. Add the address and send.');
+    } else {
+      items.push(copied
+        ? 'Subject <strong>' + subject + '</strong> is copied to your clipboard.'
+        : 'Subject to use: <strong>' + subject + '</strong>');
+      items.push('Tap <strong>Download and open draft</strong> below. The PDF saves to your Downloads folder.');
+      items.push('Attach <code>' + bragSheetFilename() + '</code> to the draft that opens, add the address, and send.');
+      items.push('If no draft opens, your browser has no mail app linked \u2014 just attach the downloaded PDF to an email yourself.');
+    }
+
+    stepsPanel('Read this first, then continue', items, [
+      {id:'email-go',   label: sharing ? 'Open share sheet' : 'Download and open draft', kind:'primary'},
+      {id:'email-copy', label:'Copy subject again'}
+    ]);
+
+    document.getElementById('email-copy').addEventListener('click', function(){
+      var ok = copySubject(subject);
+      this.textContent = ok ? 'Subject copied' : 'Copy failed';
+      var btn = this;
+      setTimeout(function(){ btn.textContent = 'Copy subject again'; }, 2000);
+    });
+
+    document.getElementById('email-go').addEventListener('click', function(){
+      if (sharing) shareBragSheet(subject); else emailFallback(subject);
+    });
+  });
+
+  function shareBragSheet(subject){
+    var file;
     try {
-      res = buildBragSheetPDF();
+      var res = buildBragSheetPDF();
       file = new File([res.blob], bragSheetFilename(), {type:'application/pdf'});
     } catch(e){
       alert('Could not build the PDF on this device.');
       return;
     }
-
-    var canShareFile = false;
-    try {
-      canShareFile = !!(navigator.canShare && navigator.share && navigator.canShare({files:[file]}));
-    } catch(e){ canShareFile = false; }
-
-    if (canShareFile){
-      /* iOS Mail ignores `title` for the subject when a file is attached, and
-         dumps `text` into the body instead. So we send neither as body text and
-         put the subject on the clipboard so it can be pasted in one tap. */
-      var copied = false;
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
-          navigator.clipboard.writeText(subject);
-          copied = true;
-        }
-      } catch(e){ copied = false; }
-
-      showSteps('Your share sheet is opening', [
-        'Choose <strong>Mail</strong> from the row of apps.',
-        'The PDF is attached already, named <code>' + bragSheetFilename() + '</code>.',
-        (copied
-          ? 'The subject line will come up blank &mdash; tap it and paste. <strong>' + subject +
-            '</strong> is already on your clipboard.'
-          : 'The subject line will come up blank. Type <strong>' + subject + '</strong> into it.'),
-        'Add who it goes to and send.'
-      ]);
-      navigator.share({
-        files: [file],
-        title: subject
-      }).catch(function(err){
-        if (err && err.name === 'AbortError'){
-          showSteps('Cancelled', ['Nothing was sent. Tap <strong>Email it</strong> again when you are ready.']);
-          return;
-        }
-        emailFallback(subject);
+    navigator.share({files:[file], title: subject}).then(function(){
+      stepsPanel('Handed off', [
+        'If Mail opened, paste the subject, add the address from Discord, and send.'
+      ], [{id:'email-copy2', label:'Copy subject again'}]);
+      document.getElementById('email-copy2').addEventListener('click', function(){
+        var ok = copySubject(subject);
+        this.textContent = ok ? 'Subject copied' : 'Copy failed';
       });
-    } else {
+    }).catch(function(err){
+      if (err && err.name === 'AbortError'){
+        stepsPanel('Cancelled', ['Nothing was sent. Tap <strong>Email it</strong> again when you are ready.'], []);
+        return;
+      }
       emailFallback(subject);
-    }
-  });
+    });
+  }
 
   function emailFallback(subject){
     downloadBragSheetPDF();
-    showSteps('Two steps on this device', [
-      'The PDF just downloaded as <code>' + bragSheetFilename() + '</code> &mdash; check your Downloads folder.',
-      'An empty email draft is opening with the subject already set.',
-      'Attach that PDF to the draft, add who it goes to, and send.',
-      'If no draft opened, your browser has no mail app linked &mdash; just attach the downloaded PDF to an email yourself.'
-    ]);
+    stepsPanel('PDF downloaded', [
+      'The PDF saved as <code>' + bragSheetFilename() + '</code> \u2014 check your Downloads folder.',
+      'An empty draft is opening with the subject already set.',
+      'Attach that PDF, add the address from the Discord group, and send.',
+      'If no draft opened, your browser has no mail app linked \u2014 attach the downloaded PDF to an email yourself.'
+    ], []);
     var body = 'The brag sheet PDF has been saved to this device. Attach it to this message before sending.';
     setTimeout(function(){
       window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) +
