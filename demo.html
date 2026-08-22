@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
 <meta name="color-scheme" content="light">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#242A31">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ITG Eval">
+<meta name="application-name" content="ITG Eval">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <title>DEMO &mdash; ITG E-6 Brag Sheet &amp; Eval Prompt Builder</title>
 <style>
   :root{
@@ -165,6 +174,15 @@
     font-weight:700;
     flex:none;
   }
+  .autosave{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    color:var(--ready);
+    flex:none;
+  }
+  .autosave.off{color:#9AA1A8;}
   .gauge-note{
     font-size:13px;
     color:#5D656D;
@@ -466,21 +484,90 @@
   #printview{display:none;}
 
   @media print{
-    body{background:#fff;}
+    html,body{background:#fff !important;}
     .masthead,.opsec,.gauge,.actions,#output,.ref,h2.sec-title,footer.note,.no-print,.callout{display:none !important;}
     section.block{display:none !important;}
+    .wrap{padding:0 !important;max-width:none !important;}
     #printview{display:block;}
-    @page{margin:0.55in;}
+    @page{size:letter;margin:0.45in 0.5in;}
   }
-  #printview h1{font-size:17px;margin:0 0 2px;letter-spacing:-.01em;}
-  #printview .pv-sub{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#555;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:14px;}
-  #printview .pv-sec{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;background:#EDEDEA;padding:4px 7px;margin:14px 0 8px;border-left:3px solid #000;page-break-after:avoid;}
-  #printview .pv-item{margin-bottom:9px;page-break-inside:avoid;}
-  #printview .pv-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:#444;}
-  #printview .pv-label .r{color:#000;font-weight:700;}
-  #printview .pv-val{font-size:12.5px;border-bottom:1px solid #BBB;min-height:17px;padding:2px 0;white-space:pre-wrap;}
-  #printview .pv-val.blank{border-bottom:1px dotted #999;min-height:30px;}
-  #printview .pv-foot{margin-top:18px;border-top:1px solid #000;padding-top:7px;font-size:9.5px;color:#555;font-family:var(--mono);}
+
+  /* running header repeats on every printed page via thead */
+  #printview table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  #printview thead{display:table-header-group;}
+  #printview tr{page-break-inside:avoid;break-inside:avoid;}
+
+  #printview th.runhead{
+    text-align:left;
+    padding:0 0 5pt;
+    border-bottom:1.5pt solid #000;
+  }
+  #printview .rh-name{
+    font-family:var(--sans);
+    font-size:12pt;
+    font-weight:700;
+    letter-spacing:-.01em;
+    display:block;
+  }
+  #printview .rh-meta{
+    font-family:var(--mono);
+    font-size:6.8pt;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:#444;
+    font-weight:400;
+    display:block;
+    margin-top:1pt;
+  }
+
+  #printview td.sec{
+    font-family:var(--mono);
+    font-size:7pt;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-weight:700;
+    background:#E9E9E6;
+    padding:2pt 4pt;
+    border-left:2.5pt solid #000;
+    padding-top:2pt;
+  }
+  #printview tr.secrow td{padding-top:7pt;}
+  #printview tr.secrow:first-child td{padding-top:3pt;}
+
+  #printview td.cell{
+    vertical-align:top;
+    padding:3pt 8pt 0 0;
+    width:50%;
+  }
+  #printview td.cell.wide{width:100%;}
+  #printview .pv-label{
+    font-family:var(--mono);
+    font-size:6.4pt;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:#333;
+    line-height:1.25;
+  }
+  #printview .pv-label .r{font-weight:700;color:#000;}
+  #printview .pv-val{
+    font-size:8.6pt;
+    line-height:1.3;
+    padding:1pt 0 1.5pt;
+    border-bottom:0.5pt solid #999;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+    min-height:9pt;
+  }
+  #printview .pv-val.blank{border-bottom:0.5pt dotted #888;min-height:20pt;}
+  #printview .pv-foot{
+    margin-top:8pt;
+    border-top:0.75pt solid #000;
+    padding-top:4pt;
+    font-size:6.4pt;
+    color:#444;
+    font-family:var(--mono);
+    line-height:1.35;
+  }
 
   @media (max-width:660px){
     .grid2{grid-template-columns:1fr;}
@@ -496,13 +583,8 @@
   }
 
   .demobar{
-    background:#2F6B45;
-    color:#fff;
-    padding:12px clamp(14px,4vw,20px);
-    font-family:var(--mono);
-    font-size:12px;
-    letter-spacing:.06em;
-    text-align:center;
+    background:#2F6B45;color:#fff;padding:12px clamp(14px,4vw,20px);
+    font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-align:center;
   }
   .demobar strong{letter-spacing:.12em;text-transform:uppercase;}
   @media print{.demobar{display:none !important;}}
@@ -543,6 +625,7 @@
     <span class="gauge-label">Brag sheet readiness</span>
     <div class="segments" id="segments"></div>
     <span class="gauge-state" id="gauge-state">Empty</span>
+    <span class="autosave" id="autosave"></span>
     <p class="gauge-note" id="gauge-note">A thin sheet produces a generic eval. Fields marked <span class="num-flag">needs a number</span> carry the most weight.</p>
   </div>
 
@@ -1004,7 +1087,7 @@
     <div class="ref-body">
       <ul>
         <li><strong>Save draft</strong> downloads a small file you can reopen later with <strong>Load draft</strong>. On iPhone it lands in Files or the share sheet; on Android it goes to Downloads.</li>
-        <li>Nothing is stored in the browser, so closing the tab loses your work. Save a draft before you walk away.</li>
+        <li><strong>Your work saves automatically</strong> on this device as you type, so you can close the tab and come back to it. Clearing your browser data wipes it — use <strong>Save draft</strong> for anything you want to keep for sure, or to move it to another device.</li>
         <li><strong>Print brag sheet</strong> opens your device's print dialog &mdash; pick a printer, or choose "Save as PDF" to email it to yourself.</li>
         <li>If <strong>Copy</strong> doesn't work in your browser, tap into the prompt box, select all, and copy by hand.</li>
       </ul>
@@ -1248,6 +1331,95 @@
   syncCpo();
   refresh();
 
+  /* ---------- autosave (works when hosted; silently off if storage is blocked) ---------- */
+  var KEY = 'itg-e6-bragsheet-DEMO';
+  var saveTag = document.getElementById('autosave');
+  var storeOK = (function(){
+    try {
+      var t = '__t';
+      window.localStorage.setItem(t, t);
+      window.localStorage.removeItem(t);
+      return true;
+    } catch(e){ return false; }
+  })();
+
+  function snapshot(){
+    var data = {fields:{}, collaterals:collaterals(),
+                lines:document.getElementById('f_lines').value,
+                chars:document.getElementById('f_chars').value,
+                ack:ack.checked};
+    var f = fields();
+    for (var i = 0; i < f.length; i++) data.fields[f[i].id] = f[i].value;
+    return data;
+  }
+
+  function applyData(data){
+    if (!data || !data.fields) return false;
+    for (var id in data.fields){
+      var el = document.getElementById(id);
+      if (el) el.value = data.fields[id];
+    }
+    if (data.lines) document.getElementById('f_lines').value = data.lines;
+    if (data.chars) document.getElementById('f_chars').value = data.chars;
+    collList.innerHTML = '';
+    var c = data.collaterals || [];
+    if (!c.length) addCollRow();
+    for (var i = 0; i < c.length; i++) addCollRow(c[i].duty, c[i].detail);
+    return true;
+  }
+
+  var saveTimer = null;
+  function autosave(){
+    if (!storeOK) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+      try {
+        window.localStorage.setItem(KEY, JSON.stringify(snapshot()));
+        saveTag.className = 'autosave';
+        saveTag.textContent = 'Saved';
+        setTimeout(function(){ if (saveTag.textContent === 'Saved') saveTag.textContent = ''; }, 1800);
+      } catch(e){
+        saveTag.className = 'autosave off';
+        saveTag.textContent = 'Not saved';
+      }
+    }, 600);
+  }
+
+  function restore(){
+    if (!storeOK){
+      saveTag.className = 'autosave off';
+      saveTag.textContent = 'No autosave';
+      return;
+    }
+    var raw = null;
+    try { raw = window.localStorage.getItem(KEY); } catch(e){}
+    if (!raw) return;
+    var data;
+    try { data = JSON.parse(raw); } catch(e){ return; }
+    if (applyData(data)){
+      syncCpo();
+      refresh();
+      saveTag.className = 'autosave';
+      saveTag.textContent = 'Draft restored';
+      setTimeout(function(){ saveTag.textContent = ''; }, 4000);
+    }
+  }
+
+  function wipeStore(){
+    if (!storeOK) return;
+    try { window.localStorage.removeItem(KEY); } catch(e){}
+  }
+
+  for (var q = 0; q < allInputs.length; q++){
+    allInputs[q].addEventListener('input', autosave);
+    allInputs[q].addEventListener('change', autosave);
+  }
+  document.getElementById('coll-list').addEventListener('input', autosave);
+  document.getElementById('add-coll').addEventListener('click', autosave);
+  document.getElementById('f_lines').addEventListener('change', autosave);
+  document.getElementById('f_chars').addEventListener('change', autosave);
+  /* autosave restore disabled in demo */
+
   /* ---------- prompt builder ---------- */
   function buildPrompt(){
     var f = fields();
@@ -1422,7 +1594,7 @@
     }
   });
 
-  /* ---------- print view ---------- */
+  /* ---------- print view: compact, 1-2 pages, name on every page ---------- */
   function buildPrintView(){
     var pv = document.getElementById('printview');
     pv.innerHTML = '';
@@ -1431,70 +1603,154 @@
     var nm = document.getElementById('f_name').value.trim();
     var rt = document.getElementById('f_rate').value.trim();
 
-    var h = document.createElement('h1');
-    h.textContent = 'E-6 Brag Sheet' + ((rt || nm) ? ' \u2014 ' + (rt + ' ' + nm).replace(/\s+/g,' ').trim() : '');
-    pv.appendChild(h);
+    // Anything filled in? If yes, print only what's filled (compact summary).
+    // If the sheet is empty, print every field as blanks for hand-filling.
+    var anyData = false;
+    for (var a = 0; a < f.length; a++){
+      if (f[a].el === cpoSel && ewsSel.value !== 'Yes') continue;  // has a default value; not user data
+      if (f[a].value){ anyData = true; break; }
+    }
+    if (!anyData && collaterals().length) anyData = true;
 
-    var sub = document.createElement('div');
-    sub.className = 'pv-sub';
-    sub.textContent = 'Interactive Training Group \u00b7 NAVPERS 1616/26 Block 43 worksheet \u00b7 Printed ' +
-      new Date().toLocaleDateString();
-    pv.appendChild(sub);
+    var table = document.createElement('table');
 
-    var currentSection = null;
-    for (var i = 0; i < f.length; i++){
-      if (f[i].el === cpoSel && ewsSel.value !== 'Yes') continue;
-      if (f[i].section !== currentSection){
-        currentSection = f[i].section;
-        var sh = document.createElement('div');
-        sh.className = 'pv-sec';
-        sh.textContent = currentSection;
-        pv.appendChild(sh);
-      }
-      var item = document.createElement('div');
-      item.className = 'pv-item';
+    // ---- running header (repeats on each page) ----
+    var thead = document.createElement('thead');
+    var hrow = document.createElement('tr');
+    var th = document.createElement('th');
+    th.className = 'runhead';
+    th.setAttribute('colspan','2');
+
+    var who = (rt + ' ' + nm).replace(/\s+/g,' ').trim();
+    var nameEl = document.createElement('span');
+    nameEl.className = 'rh-name';
+    nameEl.textContent = who ? ('E-6 Brag Sheet \u2014 ' + who) : 'E-6 Brag Sheet \u2014 Name: ______________________';
+    th.appendChild(nameEl);
+
+    var meta = document.createElement('span');
+    meta.className = 'rh-meta';
+    meta.textContent = 'ITG \u00b7 NAVPERS 1616/26 Block 43 worksheet \u00b7 ' + new Date().toLocaleDateString() +
+                       ' \u00b7 No classified, NNPI, or CUI';
+    th.appendChild(meta);
+
+    hrow.appendChild(th);
+    thead.appendChild(hrow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    table.appendChild(tbody);
+
+    function sectionRow(name){
+      var tr = document.createElement('tr');
+      tr.className = 'secrow';
+      var td = document.createElement('td');
+      td.className = 'sec';
+      td.setAttribute('colspan','2');
+      td.textContent = name;
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+
+    function makeCell(item, wide){
+      var td = document.createElement('td');
+      td.className = 'cell' + (wide ? ' wide' : '');
+      if (wide) td.setAttribute('colspan','2');
+
       var lab = document.createElement('div');
       lab.className = 'pv-label';
-      lab.textContent = f[i].label;
-      if (f[i].required){
+      lab.textContent = item.label;
+      if (item.required){
         var star = document.createElement('span');
         star.className = 'r';
         star.textContent = ' *';
         lab.appendChild(star);
       }
-      if (f[i].needsNum && !f[i].value){
-        lab.appendChild(document.createTextNode('  \u2014 include a number'));
-      }
       var val = document.createElement('div');
-      val.className = 'pv-val' + (f[i].value ? '' : ' blank');
-      val.textContent = f[i].value;
-      item.appendChild(lab); item.appendChild(val);
-      pv.appendChild(item);
+      val.className = 'pv-val' + (item.value ? '' : ' blank');
+      val.textContent = item.value;
+      td.appendChild(lab);
+      td.appendChild(val);
+      return td;
     }
 
-    var ch = document.createElement('div');
-    ch.className = 'pv-sec';
-    ch.textContent = 'Collateral duties';
-    pv.appendChild(ch);
+    function emptyCell(){
+      var td = document.createElement('td');
+      td.className = 'cell';
+      return td;
+    }
 
+    // Build rows: textareas span full width, short inputs pair up two-across.
+    var currentSection = null;
+    var pending = null;
+
+    function flush(){
+      if (!pending) return;
+      var tr = document.createElement('tr');
+      tr.appendChild(pending);
+      tr.appendChild(emptyCell());
+      tbody.appendChild(tr);
+      pending = null;
+    }
+
+    for (var i = 0; i < f.length; i++){
+      var item = f[i];
+      if (item.el === cpoSel && ewsSel.value !== 'Yes') continue;
+      if (anyData && !item.value) continue;          // compact mode: skip blanks
+
+      if (item.section !== currentSection){
+        flush();
+        currentSection = item.section;
+        sectionRow(currentSection);
+      }
+
+      var wide = (item.el.tagName === 'TEXTAREA') || (item.value && item.value.length > 60);
+
+      if (wide){
+        flush();
+        var trw = document.createElement('tr');
+        trw.appendChild(makeCell(item, true));
+        tbody.appendChild(trw);
+      } else if (pending){
+        var trp = document.createElement('tr');
+        trp.appendChild(pending);
+        trp.appendChild(makeCell(item, false));
+        tbody.appendChild(trp);
+        pending = null;
+      } else {
+        pending = makeCell(item, false);
+      }
+    }
+    flush();
+
+    // ---- collateral duties ----
     var c = collaterals();
-    var rows = c.length ? c : [{duty:'', detail:''}, {duty:'', detail:''}, {duty:'', detail:''}];
-    for (var j = 0; j < rows.length; j++){
-      var ci = document.createElement('div');
-      ci.className = 'pv-item';
-      var cl = document.createElement('div');
-      cl.className = 'pv-label';
-      cl.textContent = rows[j].duty ? rows[j].duty : 'Duty / what you did / result';
-      var cv = document.createElement('div');
-      cv.className = 'pv-val' + (rows[j].detail ? '' : ' blank');
-      cv.textContent = rows[j].detail;
-      ci.appendChild(cl); ci.appendChild(cv);
-      pv.appendChild(ci);
+    if (c.length || !anyData){
+      sectionRow('Collateral duties');
+      var rows = c.length ? c : [{duty:'', detail:''}, {duty:'', detail:''}, {duty:'', detail:''}];
+      for (var j = 0; j < rows.length; j++){
+        var tr2 = document.createElement('tr');
+        var td2 = document.createElement('td');
+        td2.className = 'cell wide';
+        td2.setAttribute('colspan','2');
+        var l2 = document.createElement('div');
+        l2.className = 'pv-label';
+        l2.textContent = rows[j].duty ? rows[j].duty : 'Duty / what you did / result';
+        var v2 = document.createElement('div');
+        v2.className = 'pv-val' + (rows[j].detail ? '' : ' blank');
+        v2.textContent = rows[j].detail;
+        td2.appendChild(l2); td2.appendChild(v2);
+        tr2.appendChild(td2);
+        tbody.appendChild(tr2);
+      }
     }
+
+    pv.appendChild(table);
 
     var foot = document.createElement('div');
     foot.className = 'pv-foot';
-    foot.textContent = '* required to generate the prompt. No classified, NNPI, or CUI content. Ranking, summary group standing, and promotion recommendation are set by the chain of command.';
+    foot.textContent = (who ? who + ' \u00b7 ' : '') +
+      '* required to generate the prompt. Ranking, summary group standing, and promotion recommendation are set by the chain of command.' +
+      (anyData ? '' : ' Blank worksheet \u2014 fill by hand, then enter online.');
     pv.appendChild(foot);
   }
 
@@ -1553,6 +1809,7 @@
 
       syncCpo();
       refresh();
+      autosave();
       e.target.value = '';
     };
     reader.readAsText(file);
@@ -1569,6 +1826,7 @@
     addCollRow();
     output.className = '';
     promptText.value = '';
+    wipeStore();
     syncCpo();
     refresh();
     window.scrollTo(0, 0);
