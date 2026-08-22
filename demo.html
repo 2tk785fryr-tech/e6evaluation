@@ -488,39 +488,55 @@
     .masthead,.opsec,.gauge,.actions,#output,.ref,h2.sec-title,footer.note,.no-print,.callout{display:none !important;}
     section.block{display:none !important;}
     .wrap{padding:0 !important;max-width:none !important;}
-    #printview{display:block;}
-    @page{size:letter;margin:0.45in 0.5in;}
+    #printview{display:block !important;}
+    @page{size:letter;margin:0.5in;}
   }
 
-  /* running header repeats on every printed page via thead */
-  #printview table{width:100%;border-collapse:collapse;table-layout:fixed;}
-  #printview thead{display:table-header-group;}
-  #printview tr{page-break-inside:avoid;break-inside:avoid;}
+  /* measuring pass: rendered offscreen at true print width */
+  #printview.measuring{
+    display:block;
+    position:absolute;
+    left:-20000px;
+    top:0;
+    width:7.5in;
+  }
 
-  #printview th.runhead{
-    text-align:left;
-    padding:0 0 5pt;
+  /* Pages are built and broken in JS, not by the browser, so every
+     engine gets the same result and nothing can be clipped. */
+  #printview .pv-page{
+    page-break-after:always;
+    break-after:page;
+    page-break-inside:auto;
+  }
+  #printview .pv-page:last-child{
+    page-break-after:auto;
+    break-after:auto;
+  }
+
+  #printview .pv-head{
     border-bottom:1.5pt solid #000;
+    padding-bottom:4pt;
+    margin-bottom:6pt;
   }
-  #printview .rh-name{
+  #printview .pv-head .rh-name{
     font-family:var(--sans);
     font-size:12pt;
     font-weight:700;
     letter-spacing:-.01em;
     display:block;
+    line-height:1.2;
   }
-  #printview .rh-meta{
+  #printview .pv-head .rh-meta{
     font-family:var(--mono);
-    font-size:6.8pt;
-    letter-spacing:.06em;
+    font-size:6.6pt;
+    letter-spacing:.05em;
     text-transform:uppercase;
     color:#444;
-    font-weight:400;
     display:block;
-    margin-top:1pt;
+    margin-top:1.5pt;
   }
 
-  #printview td.sec{
+  #printview .pv-sec{
     font-family:var(--mono);
     font-size:7pt;
     letter-spacing:.1em;
@@ -529,45 +545,56 @@
     background:#E9E9E6;
     padding:2pt 4pt;
     border-left:2.5pt solid #000;
+    margin:4.5pt 0 1pt;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  #printview .pv-sec.first{margin-top:0;}
+
+  #printview .pv-row{
+    display:flex;
+    gap:12pt;
+    align-items:flex-start;
+  }
+  #printview .pv-item{
+    flex:1 1 0;
+    min-width:0;
     padding-top:2pt;
   }
-  #printview tr.secrow td{padding-top:7pt;}
-  #printview tr.secrow:first-child td{padding-top:3pt;}
-
-  #printview td.cell{
-    vertical-align:top;
-    padding:3pt 8pt 0 0;
-    width:50%;
-  }
-  #printview td.cell.wide{width:100%;}
+  #printview .pv-item.wide{flex-basis:100%;}
   #printview .pv-label{
     font-family:var(--mono);
-    font-size:6.4pt;
-    letter-spacing:.04em;
+    font-size:6.1pt;
+    letter-spacing:.03em;
     text-transform:uppercase;
     color:#333;
-    line-height:1.25;
+    line-height:1.2;
   }
   #printview .pv-label .r{font-weight:700;color:#000;}
   #printview .pv-val{
-    font-size:8.6pt;
-    line-height:1.3;
-    padding:1pt 0 1.5pt;
+    font-size:8.2pt;
+    line-height:1.24;
+    padding:0.5pt 0 1pt;
     border-bottom:0.5pt solid #999;
     white-space:pre-wrap;
-    word-wrap:break-word;
+    overflow-wrap:break-word;
     min-height:9pt;
   }
   #printview .pv-val.blank{border-bottom:0.5pt dotted #888;min-height:20pt;}
+
   #printview .pv-foot{
-    margin-top:8pt;
     border-top:0.75pt solid #000;
-    padding-top:4pt;
-    font-size:6.4pt;
+    margin-top:5pt;
+    padding-top:2.5pt;
+    font-size:6.3pt;
     color:#444;
     font-family:var(--mono);
     line-height:1.35;
+    display:flex;
+    gap:10pt;
   }
+  #printview .pv-foot .who{font-weight:700;color:#000;white-space:nowrap;}
+  #printview .pv-foot .pg{margin-left:auto;white-space:nowrap;}
 
   @media (max-width:660px){
     .grid2{grid-template-columns:1fr;}
@@ -582,10 +609,8 @@
     *{transition:none !important;scroll-behavior:auto !important;}
   }
 
-  .demobar{
-    background:#2F6B45;color:#fff;padding:12px clamp(14px,4vw,20px);
-    font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-align:center;
-  }
+  .demobar{background:#2F6B45;color:#fff;padding:12px clamp(14px,4vw,20px);
+    font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-align:center;}
   .demobar strong{letter-spacing:.12em;text-transform:uppercase;}
   @media print{.demobar{display:none !important;}}
 </style>
@@ -1594,68 +1619,72 @@
     }
   });
 
-  /* ---------- print view: compact, 1-2 pages, name on every page ---------- */
+  /* ---------- print view ----------
+     Pagination is done here in JS instead of relying on the browser.
+     Safari, Chrome and Firefox all disagree about repeating table headers
+     and about where to break, and Safari will silently clip the tail of a
+     long table. So: measure every block at true print width, pack the
+     blocks into explicit page containers, and give each page its own
+     header and footer carrying the Sailor's name.                        */
+
+  var PRINT_USABLE_IN = 9.15;   // 11in page - 1in margins - room for the
+                                // browser's own URL/page-number strip
+  var PX_PER_IN = 96;
+
   function buildPrintView(){
     var pv = document.getElementById('printview');
     pv.innerHTML = '';
+    pv.className = '';
 
     var f = fields();
     var nm = document.getElementById('f_name').value.trim();
     var rt = document.getElementById('f_rate').value.trim();
+    var who = (rt + ' ' + nm).replace(/\s+/g,' ').trim();
+    var stamp = new Date().toLocaleDateString();
 
-    // Anything filled in? If yes, print only what's filled (compact summary).
-    // If the sheet is empty, print every field as blanks for hand-filling.
+    // Filled sheet -> print only what's filled. Empty sheet -> print the
+    // whole worksheet with writing lines so it can be filled by hand.
     var anyData = false;
     for (var a = 0; a < f.length; a++){
-      if (f[a].el === cpoSel && ewsSel.value !== 'Yes') continue;  // has a default value; not user data
+      if (f[a].el === cpoSel && ewsSel.value !== 'Yes') continue; // has a default value
       if (f[a].value){ anyData = true; break; }
     }
     if (!anyData && collaterals().length) anyData = true;
 
-    var table = document.createElement('table');
-
-    // ---- running header (repeats on each page) ----
-    var thead = document.createElement('thead');
-    var hrow = document.createElement('tr');
-    var th = document.createElement('th');
-    th.className = 'runhead';
-    th.setAttribute('colspan','2');
-
-    var who = (rt + ' ' + nm).replace(/\s+/g,' ').trim();
-    var nameEl = document.createElement('span');
-    nameEl.className = 'rh-name';
-    nameEl.textContent = who ? ('E-6 Brag Sheet \u2014 ' + who) : 'E-6 Brag Sheet \u2014 Name: ______________________';
-    th.appendChild(nameEl);
-
-    var meta = document.createElement('span');
-    meta.className = 'rh-meta';
-    meta.textContent = 'ITG \u00b7 NAVPERS 1616/26 Block 43 worksheet \u00b7 ' + new Date().toLocaleDateString() +
-                       ' \u00b7 No classified, NNPI, or CUI';
-    th.appendChild(meta);
-
-    hrow.appendChild(th);
-    thead.appendChild(hrow);
-    table.appendChild(thead);
-
-    var tbody = document.createElement('tbody');
-    table.appendChild(tbody);
-
-    function sectionRow(name){
-      var tr = document.createElement('tr');
-      tr.className = 'secrow';
-      var td = document.createElement('td');
-      td.className = 'sec';
-      td.setAttribute('colspan','2');
-      td.textContent = name;
-      tr.appendChild(td);
-      tbody.appendChild(tr);
+    function headEl(){
+      var d = document.createElement('div');
+      d.className = 'pv-head';
+      var n = document.createElement('span');
+      n.className = 'rh-name';
+      n.textContent = who ? ('E-6 Brag Sheet \u2014 ' + who)
+                          : 'E-6 Brag Sheet \u2014 Name: ______________________';
+      var m = document.createElement('span');
+      m.className = 'rh-meta';
+      m.textContent = 'ITG \u00b7 NAVPERS 1616/26 Block 43 worksheet \u00b7 ' + stamp +
+                      ' \u00b7 No classified, NNPI, or CUI';
+      d.appendChild(n); d.appendChild(m);
+      return d;
     }
 
-    function makeCell(item, wide){
-      var td = document.createElement('td');
-      td.className = 'cell' + (wide ? ' wide' : '');
-      if (wide) td.setAttribute('colspan','2');
+    function footEl(pageNum, pageCount){
+      var d = document.createElement('div');
+      d.className = 'pv-foot';
+      var w = document.createElement('span');
+      w.className = 'who';
+      w.textContent = who || 'Name: ____________';
+      var note = document.createElement('span');
+      note.textContent = '* required to generate the prompt. Ranking, summary group standing, and promotion recommendation are set by the chain of command.' +
+                         (anyData ? '' : ' Blank worksheet \u2014 fill by hand, then enter online.');
+      var pg = document.createElement('span');
+      pg.className = 'pg';
+      pg.textContent = 'Page ' + pageNum + ' of ' + pageCount;
+      d.appendChild(w); d.appendChild(note); d.appendChild(pg);
+      return d;
+    }
 
+    function itemEl(item, wide){
+      var d = document.createElement('div');
+      d.className = 'pv-item' + (wide ? ' wide' : '');
       var lab = document.createElement('div');
       lab.className = 'pv-label';
       lab.textContent = item.label;
@@ -1668,90 +1697,130 @@
       var val = document.createElement('div');
       val.className = 'pv-val' + (item.value ? '' : ' blank');
       val.textContent = item.value;
-      td.appendChild(lab);
-      td.appendChild(val);
-      return td;
+      d.appendChild(lab); d.appendChild(val);
+      return d;
     }
 
-    function emptyCell(){
-      var td = document.createElement('td');
-      td.className = 'cell';
-      return td;
-    }
-
-    // Build rows: textareas span full width, short inputs pair up two-across.
+    // ---- 1. build a flat list of blocks ----
+    var blocks = [];
     var currentSection = null;
-    var pending = null;
+    var pendingItem = null;
 
-    function flush(){
-      if (!pending) return;
-      var tr = document.createElement('tr');
-      tr.appendChild(pending);
-      tr.appendChild(emptyCell());
-      tbody.appendChild(tr);
-      pending = null;
+    function rowOf(children){
+      var r = document.createElement('div');
+      r.className = 'pv-row';
+      for (var i = 0; i < children.length; i++) r.appendChild(children[i]);
+      return r;
+    }
+    function flushPending(){
+      if (!pendingItem) return;
+      blocks.push(rowOf([pendingItem, document.createElement('div')]));
+      pendingItem = null;
     }
 
     for (var i = 0; i < f.length; i++){
       var item = f[i];
       if (item.el === cpoSel && ewsSel.value !== 'Yes') continue;
-      if (anyData && !item.value) continue;          // compact mode: skip blanks
+      if (anyData && !item.value) continue;
 
       if (item.section !== currentSection){
-        flush();
+        flushPending();
         currentSection = item.section;
-        sectionRow(currentSection);
+        var sec = document.createElement('div');
+        sec.className = 'pv-sec' + (blocks.length === 0 ? ' first' : '');
+        sec.textContent = currentSection;
+        blocks.push(sec);
       }
 
-      var wide = (item.el.tagName === 'TEXTAREA') || (item.value && item.value.length > 60);
+      var wide = anyData ? (item.value.length > 58)
+                         : (item.el.tagName === 'TEXTAREA');
 
       if (wide){
-        flush();
-        var trw = document.createElement('tr');
-        trw.appendChild(makeCell(item, true));
-        tbody.appendChild(trw);
-      } else if (pending){
-        var trp = document.createElement('tr');
-        trp.appendChild(pending);
-        trp.appendChild(makeCell(item, false));
-        tbody.appendChild(trp);
-        pending = null;
+        flushPending();
+        blocks.push(rowOf([itemEl(item, true)]));
+      } else if (pendingItem){
+        blocks.push(rowOf([pendingItem, itemEl(item, false)]));
+        pendingItem = null;
       } else {
-        pending = makeCell(item, false);
+        pendingItem = itemEl(item, false);
       }
     }
-    flush();
+    flushPending();
 
-    // ---- collateral duties ----
     var c = collaterals();
     if (c.length || !anyData){
-      sectionRow('Collateral duties');
-      var rows = c.length ? c : [{duty:'', detail:''}, {duty:'', detail:''}, {duty:'', detail:''}];
+      var csec = document.createElement('div');
+      csec.className = 'pv-sec';
+      csec.textContent = 'Collateral duties';
+      blocks.push(csec);
+      var rows = c.length ? c : [{duty:'',detail:''},{duty:'',detail:''},{duty:'',detail:''}];
       for (var j = 0; j < rows.length; j++){
-        var tr2 = document.createElement('tr');
-        var td2 = document.createElement('td');
-        td2.className = 'cell wide';
-        td2.setAttribute('colspan','2');
-        var l2 = document.createElement('div');
-        l2.className = 'pv-label';
-        l2.textContent = rows[j].duty ? rows[j].duty : 'Duty / what you did / result';
-        var v2 = document.createElement('div');
-        v2.className = 'pv-val' + (rows[j].detail ? '' : ' blank');
-        v2.textContent = rows[j].detail;
-        td2.appendChild(l2); td2.appendChild(v2);
-        tr2.appendChild(td2);
-        tbody.appendChild(tr2);
+        blocks.push(rowOf([itemEl({
+          label: rows[j].duty ? rows[j].duty : 'Duty / what you did / result',
+          value: rows[j].detail,
+          required: false
+        }, true)]));
       }
     }
 
-    pv.appendChild(table);
+    // ---- 2. measure every block at real print width ----
+    var scratch = document.createElement('div');
+    pv.appendChild(scratch);
+    pv.className = 'measuring';
 
-    var foot = document.createElement('div');
-    foot.className = 'pv-foot';
-    foot.textContent = (who ? who + ' \u00b7 ' : '') +
-      '* required to generate the prompt. Ranking, summary group standing, and promotion recommendation are set by the chain of command.' +
-      (anyData ? '' : ' Blank worksheet \u2014 fill by hand, then enter online.');
-    pv.appendChild(foot);
+    var probeHead = headEl();
+    var probeFoot = footEl(1, 1);
+    scratch.appendChild(probeHead);
+    scratch.appendChild(probeFoot);
+    var headH = probeHead.offsetHeight;
+    var footH = probeFoot.offsetHeight;
+    scratch.innerHTML = '';
+
+    var heights = [];
+    for (var b = 0; b < blocks.length; b++){
+      scratch.appendChild(blocks[b]);
+      heights.push(blocks[b].offsetHeight +
+        parseFloat(getComputedStyle(blocks[b]).marginTop || 0) +
+        parseFloat(getComputedStyle(blocks[b]).marginBottom || 0));
+      scratch.removeChild(blocks[b]);
+    }
+
+    pv.className = '';
+    pv.innerHTML = '';
+
+    // ---- 3. pack blocks into pages ----
+    var budget = (PRINT_USABLE_IN * PX_PER_IN) - headH - footH;
+    var pages = [[]];
+    var used = 0;
+
+    for (var k = 0; k < blocks.length; k++){
+      var h = heights[k];
+      var isSection = blocks[k].className.indexOf('pv-sec') > -1;
+
+      if (used + h > budget && pages[pages.length - 1].length){
+        pages.push([]);
+        used = 0;
+      }
+      // don't strand a section heading alone at the foot of a page
+      if (isSection && used + h + (heights[k+1] || 0) > budget && pages[pages.length-1].length){
+        pages.push([]);
+        used = 0;
+      }
+      pages[pages.length - 1].push(blocks[k]);
+      used += h;
+    }
+
+    // ---- 4. render the pages ----
+    for (var pnum = 0; pnum < pages.length; pnum++){
+      var page = document.createElement('div');
+      page.className = 'pv-page';
+      page.appendChild(headEl());
+      var body = document.createElement('div');
+      for (var m2 = 0; m2 < pages[pnum].length; m2++) body.appendChild(pages[pnum][m2]);
+      page.appendChild(body);
+      page.appendChild(footEl(pnum + 1, pages.length));
+      pv.appendChild(page);
+    }
   }
 
   document.getElementById('printbtn').addEventListener('click', function(){
