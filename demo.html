@@ -433,6 +433,42 @@
   }
   .blockers.clear strong{color:var(--ready);}
 
+  .action-hint{
+    margin:14px 0 0;
+    font-size:13.5px;
+    color:#5D656D;
+    line-height:1.45;
+  }
+  .email-steps{
+    display:none;
+    margin-top:14px;
+    background:#E7F0F8;
+    border:1px solid #B9D2E6;
+    border-left:5px solid #14568A;
+    padding:14px 16px;
+    border-radius:2px;
+  }
+  .email-steps.show{display:block;}
+  .email-steps h4{
+    margin:0 0 8px;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:#0F4670;
+  }
+  .email-steps ol{margin:0;padding-left:20px;font-size:14.5px;color:#123B5C;line-height:1.5;}
+  .email-steps li{margin-bottom:5px;}
+  .email-steps li:last-child{margin-bottom:0;}
+  .email-steps code{
+    font-family:var(--mono);
+    font-size:12.5px;
+    background:#fff;
+    border:1px solid #C6DAEA;
+    padding:1px 5px;
+    word-break:break-all;
+  }
+
   /* ---------- output ---------- */
   #output{margin-top:22px;display:none;}
   #output.show{display:block;}
@@ -1130,6 +1166,8 @@
       <input type="file" id="loadfile" accept=".json,application/json" style="display:none">
       <button type="button" class="btn ghost" id="clear">Clear</button>
     </div>
+    <p class="action-hint"><strong>Email it</strong> builds the PDF and hands it to your phone's share sheet, where you pick Mail. On a computer the PDF downloads and you attach it yourself. Either way you fill in who it goes to &mdash; no address is pre-filled.</p>
+    <div class="email-steps" id="email-steps"></div>
   </div>
 
   <div id="output">
@@ -2402,6 +2440,16 @@
      the share sheet and the Sailor picks Mail. On anything without it we download
      the PDF and open an empty draft with the subject filled in, so they attach the
      file that just landed. No recipient is ever pre-filled. */
+  var emailSteps = document.getElementById('email-steps');
+
+  function showSteps(title, items){
+    var html = '<h4>' + title + '</h4><ol>';
+    for (var i = 0; i < items.length; i++) html += '<li>' + items[i] + '</li>';
+    emailSteps.innerHTML = html + '</ol>';
+    emailSteps.className = 'email-steps show';
+    try { emailSteps.scrollIntoView({behavior:'smooth', block:'nearest'}); } catch(e){}
+  }
+
   document.getElementById('emailbtn').addEventListener('click', function(){
     var subject = bragSheetLabel();
     var res, file;
@@ -2420,13 +2468,34 @@
     } catch(e){ canShareFile = false; }
 
     if (canShareFile){
+      /* iOS Mail ignores `title` for the subject when a file is attached, and
+         dumps `text` into the body instead. So we send neither as body text and
+         put the subject on the clipboard so it can be pasted in one tap. */
+      var copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext){
+          navigator.clipboard.writeText(subject);
+          copied = true;
+        }
+      } catch(e){ copied = false; }
+
+      showSteps('Your share sheet is opening', [
+        'Choose <strong>Mail</strong> from the row of apps.',
+        'The PDF is attached already, named <code>' + bragSheetFilename() + '</code>.',
+        (copied
+          ? 'The subject line will come up blank &mdash; tap it and paste. <strong>' + subject +
+            '</strong> is already on your clipboard.'
+          : 'The subject line will come up blank. Type <strong>' + subject + '</strong> into it.'),
+        'Add who it goes to and send.'
+      ]);
       navigator.share({
         files: [file],
-        title: subject,
-        text: subject
+        title: subject
       }).catch(function(err){
-        // user dismissed the sheet, or the platform refused - fall back quietly
-        if (err && err.name === 'AbortError') return;
+        if (err && err.name === 'AbortError'){
+          showSteps('Cancelled', ['Nothing was sent. Tap <strong>Email it</strong> again when you are ready.']);
+          return;
+        }
         emailFallback(subject);
       });
     } else {
@@ -2436,6 +2505,12 @@
 
   function emailFallback(subject){
     downloadBragSheetPDF();
+    showSteps('Two steps on this device', [
+      'The PDF just downloaded as <code>' + bragSheetFilename() + '</code> &mdash; check your Downloads folder.',
+      'An empty email draft is opening with the subject already set.',
+      'Attach that PDF to the draft, add who it goes to, and send.',
+      'If no draft opened, your browser has no mail app linked &mdash; just attach the downloaded PDF to an email yourself.'
+    ]);
     var body = 'The brag sheet PDF has been saved to this device. Attach it to this message before sending.';
     setTimeout(function(){
       window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) +
