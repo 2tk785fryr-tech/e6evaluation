@@ -38,6 +38,9 @@ IDENTIFICATION
               Last name:
   * REQUIRED  Primary billet or title:
               What you're ready for next (LPO, instructor duty, specific billet):
+              Date of last evaluation:          (worksheet only - do not paste into the prompt)
+              Date reported to command:         (worksheet only)
+              Date gained to ITG:               (worksheet only)
 
 WATCHSTANDING & QUALIFICATIONS
   * REQUIRED  Watch stations qualified:
@@ -115,78 +118,95 @@ TASK
 Write the Block 43 "Comments on Performance" narrative for the First Class Petty Officer
 described below.
 
-FORMAT RULES - FOLLOW EXACTLY
-1. ALL CAPS throughout.
-2. Fit within [18] lines at approximately [91] characters per line. Count as you go and
-   report the line count at the end. If it runs long, cut the weakest bullet, not the numbers.
-3. Bullet format: a hyphen, a two-to-five word CAPITALIZED lead-in ending in a period, then
-   one to three sentences of substance.
-   Shape:  - EXPERT WATCHSTANDER. [ACTION] [SCOPE/NUMBER] [RESULT/IMPACT].
-4. Every bullet follows ACTION -> SCOPE -> IMPACT. Never state a duty without a result.
-5. Use numerals for all numbers. Use every figure I have given you.
-6. Avoid pronouns. Start with a verb, or use the rate and last name.
-7. NEVER INVENT A NUMBER, AWARD, QUALIFICATION, OR EVENT. If a bullet would be stronger with
-   data I did not provide, write [NEED NUMBER] in the text and list what you need at the end.
+VOICE AND FORMATTING - FOLLOW EXACTLY
+1. DO NOT WRITE IN ALL CAPITAL LETTERS. Use normal sentence capitalization throughout.
+2. Each bullet begins with a short Title Case lead-in of one to three words, followed by a
+   period, then ordinary sentences. Like this:
+     - Expert Watchstander. Stood 58 watches as Engineering Watch Supervisor across 63
+       evolutions, generating 312 hours of trainer availability for 9 student crews.
+   The lead-in names the quality being demonstrated. The sentences supply the evidence.
+3. Every bullet follows action, then scope or number, then result. Never state a duty
+   without the result it produced.
+4. Use numerals for all numbers, and use every figure I have given you.
+5. Avoid filler adjectives. Words like "dedicated", "hardworking", "consummate
+   professional" and "consistently demonstrates" appear on nearly every eval a board reads
+   and tell them nothing. Cut any adjective that is not carrying evidence.
+6. NEVER INVENT A NUMBER, AWARD, QUALIFICATION, OR EVENT. If a bullet would be stronger
+   with data I did not provide, write [NEED NUMBER] and list what you need at the end.
    Do not estimate, round up, or fill gaps with plausible-sounding detail.
-8. Do NOT write a ranking statement (no "#2 OF 11") and do NOT assign a promotion
-   recommendation tier (no EARLY PROMOTE / MUST PROMOTE / PROMOTABLE). Those belong to the
-   reporting senior.
-9. No classified, NNPI, or CUI content. Keep technical references generic. If anything I have
-   given you looks like it should not be in a commercial AI chat, tell me before writing.
-10. Plain, hard language. No "consummate professional," no "tireless dedication," no
-    "unmatched," no stacked adjectives. Verbs and results.
+7. Do NOT write a ranking statement (no "#2 of 11") and do NOT assign a promotion
+   recommendation tier (no Early Promote / Must Promote / Promotable). Those belong to
+   the reporting senior.
+8. No classified, NNPI, or CUI content. Keep technical references generic.
+9. No exclamation points. No stacked adjectives. Plain, hard language.
+10. Fit the finished write-up within [16] lines at approximately [91] characters per line.
+    Count as you go and report the line count at the end.
 
-STRUCTURE
-- Line 1: A short opening line establishing what this Sailor is and the scope of the impact.
-- FIRST BULLET: MUST be leadership or mentoring. This is mandatory. Lead with people
-  developed and what happened to them, not with technical work.
-- Second bullet: technical knowledge and professional expertise.
-- Remaining bullets: 3 to 4 more, strongest first, drawn from watchstanding, training
-  delivery, OCTG support, programs, and collateral duties as the material supports.
-- [KEEP THIS LINE ONLY IF YOU TRANSFERRED IN MID-CYCLE] Include one bullet covering the
-  portion of the reporting period spent in the previous division, and make clear it occurred
-  earlier in the period. Do not let it displace the leadership bullet from the first position.
-- Final line: the closing statement described below.
+STRUCTURE - OPENING, THREE BULLETS, CLOSING
 
-CLOSING STATEMENT - MANDATORY
-[DELETE THE THREE OPTIONS THAT DO NOT APPLY]
+Opening statement. One or two sentences. It must begin exactly in this form:
+  "Petty Officer [LAST NAME] is ..."
+It establishes what this Sailor is and the scope of the impact. Not a list of duties -
+a characterization that the three bullets then prove.
 
-  OPTION A - EWS QUALIFIED, CPO RECOMMENDATION AUTHORIZED:
-  This Sailor is a qualified Engineering Watch Supervisor. The narrative MUST close with a
-  Chief Petty Officer recommendation. The final line must contain this exact sentence, word
-  for word:
-      [PICK ONE:
-       HIGHLY RECOMMENDED FOR CHIEF PETTY OFFICER.
-       HAS MY RECOMMENDATION FOR CHIEF PETTY OFFICER.
-       A STRONG CANDIDATE FOR CHIEF PETTY OFFICER.]
-  You may precede it on the same line with a short forward-looking phrase naming the next
-  billet this Sailor is ready for. Do not soften, reword, or qualify that sentence.
+Bullets. Exactly THREE bullets in the write-up itself. Do not exceed three.
+  - Bullet 1 MUST be leadership or mentoring. This is mandatory. Lead with people
+    developed and what happened to them, not with technical work.
+  - Bullet 2 should be technical knowledge and professional expertise.
+  - Bullet 3 is the strongest remaining material: watchstanding, training delivery,
+    OCTG support, programs, or a collateral duty.
+  - [KEEP ONLY IF YOU TRANSFERRED IN MID-CYCLE] Time earlier in the reporting period was
+    served in a different division. Work that in where it is strongest, making clear it
+    happened earlier in the period. It must not displace the leadership bullet from first.
 
-  OPTION B - EWS QUALIFIED, NO CPO STATEMENT AUTHORIZED:
-  This Sailor is a qualified Engineering Watch Supervisor, but no Chief Petty Officer
-  statement was authorized. Close on readiness for increased responsibility and name the
-  specific next billet. Do not write a Chief Petty Officer recommendation.
+Closing statement. One sentence. See the wording rules below.
 
-  OPTION C - EWS IN PROGRESS:
+ALTERNATE BULLET
+After the finished write-up, under a heading "Alternate bullet", give ONE additional
+bullet built from strong material that did not make the cut, and say in a single line
+which of the three it would best replace and what the trade-off is. The Sailor picks.
+
+CLOSING STATEMENT - WORDING
+[DELETE THE OPTIONS THAT DO NOT APPLY]
+
+  OPTION A - EWS QUALIFIED:
+  This Sailor is a qualified Engineering Watch Supervisor, so the write-up closes with a
+  Chief Petty Officer recommendation. Write ONE sentence that begins with the rate,
+  states the leadership quality earning the recommendation, and ends with this exact
+  phrase: [PICK ONE:
+     "highly recommended for Chief Petty Officer"
+     "has my recommendation for Chief Petty Officer"
+     "recommended for Chief Petty Officer"]
+  Pattern to follow (do not copy the wording, follow the shape):
+    "Petty Officer Vasquez is a proven leader who excels at every task assigned, highly
+     recommended for Chief Petty Officer."
+
+  OPTION B - EWS IN PROGRESS:
   This Sailor is in the Engineering Watch Supervisor qualification pipeline but is not yet
-  qualified. Do NOT write a Chief Petty Officer recommendation. Close on qualification
-  progress and readiness for increased responsibility, naming the specific next billet.
+  qualified, so the recommendation must be made conditional on that qualification. Write
+  ONE sentence that begins with the rate, states the leadership quality, and makes the
+  advancement recommendation contingent on earning EWS.
+  Pattern to follow (do not copy the wording, follow the shape):
+    "Petty Officer Vasquez is an excellent leader, has my recommendation for advancement
+     to Chief Petty Officer upon qualification as Engineering Watch Supervisor."
 
-  OPTION D - NOT EWS QUALIFIED:
-  This Sailor is not Engineering Watch Supervisor qualified. Do NOT write a Chief Petty
-  Officer recommendation. Close on readiness for increased responsibility and name the
-  specific next billet.
+  OPTION C - NOT EWS QUALIFIED:
+  Do NOT write a Chief Petty Officer recommendation - a board reads an unearned one as
+  inflation and it damages the record. Close instead on demonstrated readiness for
+  increased responsibility, naming the specific next billet the Sailor is ready for.
+
+The closing is one sentence, in sentence case, with no exclamation point.
 
 TRAIT COVERAGE
 The narrative must supply evidence for these seven graded traits. Tell me at the end which
 traits are thinly supported so I can go find more material:
-  1. PROFESSIONAL KNOWLEDGE
-  2. QUALITY OF WORK
-  3. COMMAND OR ORGANIZATIONAL CLIMATE / EQUAL OPPORTUNITY
-  4. MILITARY BEARING / CHARACTER
-  5. PERSONAL JOB ACCOMPLISHMENT / INITIATIVE
-  6. TEAMWORK
-  7. LEADERSHIP
+  1. Professional Knowledge
+  2. Quality of Work
+  3. Command or Organizational Climate / Equal Opportunity
+  4. Military Bearing / Character
+  5. Personal Job Accomplishment / Initiative
+  6. Teamwork
+  7. Leadership
 
 COMMAND CONTEXT - USE THIS TO FRAME IMPACT
 The member is a nuclear-trained First Class Petty Officer (MMN1, EMN1, or ETN1) assigned to an
@@ -203,12 +223,38 @@ can get underway.
 MEMBER INFORMATION
 [PASTE YOUR PART A BRAG SHEET HERE - DELETE ANY LINE YOU LEFT BLANK]
 
-DELIVERABLES
-1. The Block 43 narrative, formatted as above.
-2. Line count, and whether it fits.
-3. The specific data points you need from me to replace any [NEED NUMBER] tags.
-4. A one-line note on which of the seven traits are weakly supported.
-5. Two alternate opening leadership bullets.
+STANDARD OF COMPLETION - THIS IS THE MOST IMPORTANT INSTRUCTION
+Your first reply must be a finished product, not a draft to be worked up. Assume the
+Sailor will copy your write-up straight into Block 43 and submit it. That means:
+  - No placeholders, no square brackets, no blanks to fill in, and no [NEED NUMBER]
+    tags inside the write-up itself. The one permitted exception is the last name if I
+    did not give you one.
+  - If a figure is missing, write the bullet using only what I did give you and make it
+    work. Do not invent the number, and do not leave a gap where it would have gone.
+    Note separately, below the write-up, that the bullet would be stronger with it.
+  - No markdown, no bold, no asterisks, no headings inside the write-up. Plain text
+    only, with each bullet starting with a hyphen and a space.
+  - Check the length yourself before you answer. Count the characters in your longest
+    line and rewrite anything over 91 characters until it fits.
+  - Put the write-up first in your reply, by itself, so it can be selected and copied
+    in one go. Everything else comes after it.
+Aim for something the Sailor could submit as-is, and that their chief would only need
+to adjust at the margins.
+
+WHAT TO GIVE ME BACK, IN THIS ORDER
+1. The finished Block 43 write-up, under the heading "READY TO PASTE" and nothing else
+   mixed into it: opening statement, three bullets, closing statement.
+2. Line count and longest line length, confirming it fits 16 lines of 91 characters.
+3. The alternate bullet, with the one-line note on what it would replace.
+4. Any figures that would have strengthened a bullet, as specific questions.
+5. One line on which of the seven traits are weakly supported by this material.
+6. QUESTIONS FOR ME. Ask up to five specific questions whose answers would most improve
+   this write-up. Ask about missing numbers, unclear scope, outcomes you suspect exist but
+   were not stated, and anything ambiguous in what I gave you. Do not ask generic
+   questions - ask about this Sailor and this material.
+7. SUGGESTED NEXT PROMPTS. Give me five short follow-up prompts, written so I can paste
+   them straight back to you, that would sharpen this specific draft. Tailor them to the
+   actual weaknesses you see - not a generic list.
 
 If what I have given you is too thin to write a credible eval, say so and ask me targeted
 questions instead of writing something generic.

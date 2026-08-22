@@ -243,7 +243,7 @@
   }
   .req-star{color:var(--alarm);font-weight:700;margin-left:2px;}
 
-  input[type=text], textarea, select{
+  input[type=text], input[type=date], textarea, select{
     width:100%;
     font-family:var(--mono);
     font-size:16px;
@@ -263,13 +263,14 @@
     padding-right:34px;
   }
   textarea{resize:vertical;min-height:76px;}
-  input[type=text]:focus, textarea:focus, select:focus{
+  input[type=text]:focus, input[type=date]:focus, textarea:focus, select:focus{
     outline:2px solid var(--amber);
     outline-offset:-1px;
     background:#fff;
   }
 
   .field.needs input[type=text],
+  .field.needs input[type=date],
   .field.needs textarea,
   .field.needs select{
     border-color:var(--alarm-soft);
@@ -278,6 +279,7 @@
   }
   .field.needs label{color:var(--alarm);}
   .field.filled-req input[type=text],
+  .field.filled-req input[type=date],
   .field.filled-req textarea,
   .field.filled-req select{
     border-left:4px solid var(--ready);
@@ -693,6 +695,22 @@
         </label>
         <input type="text" id="f_next" data-field data-section="Identification" data-label="Ready for next" autocomplete="off">
       </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="f_lasteval">Date of last evaluation</label>
+          <input type="date" id="f_lasteval" data-field data-section="Identification" data-label="Date of last evaluation">
+        </div>
+        <div class="field">
+          <label for="f_reported">Date reported to command</label>
+          <input type="date" id="f_reported" data-field data-section="Identification" data-label="Date reported to command">
+        </div>
+      </div>
+      <div class="field">
+        <label for="f_gained">Date gained to ITG
+          <span class="sub">If this is later than the date you reported, the time before it belongs in section 08.</span>
+        </label>
+        <input type="date" id="f_gained" data-field data-section="Identification" data-label="Date gained to ITG">
+      </div>
     </div>
   </section>
 
@@ -720,14 +738,14 @@
         </select>
       </div>
       <div class="field hidden" id="cpo-wrap">
-        <label for="f_cpo">Closing Chief Petty Officer statement
-          <span class="sub">Pick the wording your chain of command supports. It will appear verbatim as the last line.</span>
+        <label for="f_cpo">Strength of the closing recommendation
+          <span class="sub">Boards read these as a ladder. Pick the rung your chain of command actually supports &mdash; overreaching is more damaging than a plain recommendation.</span>
         </label>
-        <select id="f_cpo" data-field data-section="Watchstanding" data-label="CPO closing statement">
-          <option value="HIGHLY RECOMMENDED FOR CHIEF PETTY OFFICER.">Highly recommended for Chief Petty Officer</option>
-          <option value="HAS MY RECOMMENDATION FOR CHIEF PETTY OFFICER.">Has my recommendation for Chief Petty Officer</option>
-          <option value="A STRONG CANDIDATE FOR CHIEF PETTY OFFICER.">A strong candidate for Chief Petty Officer</option>
-          <option value="">Leave the CPO statement out</option>
+        <select id="f_cpo" data-field data-section="Watchstanding" data-label="Closing recommendation strength">
+          <option value="strongest">Strongest &mdash; "highly recommended for Chief Petty Officer"</option>
+          <option value="standard">Standard &mdash; "has my recommendation for Chief Petty Officer"</option>
+          <option value="measured">Measured &mdash; "recommended for Chief Petty Officer"</option>
+          <option value="">No CPO statement &mdash; close on readiness instead</option>
         </select>
       </div>
       <div class="grid2">
@@ -1001,11 +1019,14 @@
     <div class="block-body">
       <div class="grid2">
         <div class="field">
-          <label for="f_lines">Available lines in Block 43</label>
+          <label for="f_lines">Length of the write-up
+            <span class="sub">Block 43 usually holds 18 lines. Writing shorter forces every sentence to earn its place &mdash; 16 is the sweet spot.</span>
+          </label>
           <select id="f_lines">
-            <option value="18" selected>18 lines</option>
-            <option value="16">16 lines</option>
-            <option value="20">20 lines</option>
+            <option value="14">14 lines &mdash; tightest</option>
+            <option value="15">15 lines</option>
+            <option value="16" selected>16 lines &mdash; recommended</option>
+            <option value="18">18 lines &mdash; full block</option>
           </select>
         </div>
         <div class="field">
@@ -1049,42 +1070,47 @@
   <details class="ref">
     <summary>Follow-up prompts for the second pass</summary>
     <div class="ref-body">
-      <p>The first draft is a starting point. Run these next.</p>
-      <p class="q">Too long. Cut it to the line limit by removing the weakest bullet entirely. Do not shorten by deleting numbers.</p>
-      <p class="q">The opening leadership bullet is weak. Rewrite it to show me developing people rather than doing the work myself. Here's more detail: &hellip;</p>
-      <p class="q">Strip every adjective that isn't doing work. Rewrite with harder verbs and keep every number.</p>
-      <p class="q">Read this as a selection board member with 90 seconds. What's the weakest bullet, and what would make me skip this record?</p>
-      <p class="q">List every factual claim in this narrative. Flag anything you inferred rather than something I told you directly.</p>
-      <p class="q">Give me 3 alternate opening lines, all leading with leadership.</p>
+      <p>The first draft is a starting point. The AI will also suggest prompts tailored to your draft &mdash; these are the general-purpose ones.</p>
+      <p><strong>Length and fit</strong></p>
+      <p class="q">Too long. Cut it to the line limit by tightening sentences, not by deleting numbers.</p>
+      <p class="q">I have 2 lines of room left. Add the most valuable detail I gave you that did not make the draft.</p>
+      <p><strong>Strength and tone</strong></p>
+      <p class="q">Strip every adjective that is not carrying evidence, then rewrite with harder verbs.</p>
+      <p class="q">This reads like a job description. Rewrite each bullet so it ends on the result, not the task.</p>
+      <p class="q">The opening statement is generic. Rewrite it so it could only describe this Sailor.</p>
+      <p><strong>Content</strong></p>
+      <p class="q">Swap in the alternate bullet and show me the full write-up both ways.</p>
+      <p class="q">The leadership bullet shows me doing the work. Rewrite it to show me developing people. More detail: &hellip;</p>
+      <p class="q">Rebalance toward Climate/EO and Military Bearing &mdash; those traits are thin.</p>
+      <p><strong>Pressure-testing</strong></p>
+      <p class="q">Read this as a selection board member with 90 seconds. What is the weakest bullet, and what would make you skip this record?</p>
+      <p class="q">List every factual claim here. Flag anything you inferred rather than something I told you.</p>
+      <p class="q">Give me 3 alternate closing statements at different strengths so I can take them to my chief.</p>
     </div>
   </details>
 
   <details class="ref">
     <summary>ITG bullet skeletons</summary>
     <div class="ref-body">
-      <p><strong>Leadership and mentoring &mdash; your first bullet</strong></p>
-      <code>- DEVELOPS SAILORS. MENTORED [N] JUNIOR PERSONNEL; [N] ADVANCED IN RATE, [N] COMPLETED WATCH QUALIFICATION, [N] EARNED [RECOGNITION].</code>
-      <code>- LED FROM THE FRONT. SUPERVISED A [N]-PERSON WATCH SECTION THROUGH [N] EVOLUTIONS WITH ZERO PROCEDURAL COMPLIANCE DISCREPANCIES.</code>
-      <p><strong>Technical knowledge</strong></p>
-      <code>- RECOGNIZED EXPERT. SOUGHT OUT SITE-WIDE FOR [SYSTEM AREA] KNOWLEDGE; RESOLVED [N] TECHNICAL QUESTIONS AND CORRECTED [N] PROCEDURAL ERRORS BEFORE THEY REACHED STUDENTS.</code>
-      <code>- MASTERED THE MATERIAL. SCORED [N]% ON LEVEL-OF-KNOWLEDGE EXAMINATIONS, [N] POINTS ABOVE THE DIVISION AVERAGE.</code>
-      <p><strong>Watchstanding and trainer operations</strong></p>
-      <code>- SUPERIOR WATCHSTANDER. STOOD [N] WATCHES AS [STATION] ACROSS [N] EVOLUTIONS, ENABLING [N] HOURS OF TRAINER AVAILABILITY FOR [N] STUDENT CREWS.</code>
-      <code>- PLANT EXPERT. QUALIFIED [STATION] IN [N] WEEKS, [N] MONTHS AHEAD OF PIPELINE, IMMEDIATELY FILLING A CRITICAL WATCH SECTION GAP.</code>
-      <p><strong>Training delivery</strong></p>
-      <code>- MASTER INSTRUCTOR. DELIVERED [N] HOURS OF INSTRUCTION TO [N] PERSONNEL ACROSS [N] EVENTS; STUDENT EXAM AVERAGE OF [N]% EXCEEDED SITE STANDARD.</code>
-      <code>- BUILT THE CURRICULUM. AUTHORED AND VALIDATED [N] LESSON PLANS AND [N] DRILL SCENARIOS NOW USED SITE-WIDE, ELIMINATING [N] HOURS OF ANNUAL REWORK.</code>
-      <p><strong>OCTG support</strong></p>
-      <code>- PIPELINE ENABLER. CONDUCTED [N] ORAL CHECKOUTS FOR NEWLY REPORTED STUDENTS IN DIRECT SUPPORT OF OCTG, RETURNING [N] QUALIFIED WATCHSTANDERS TO THEIR CREWS ON SCHEDULE.</code>
-      <code>- STANDARD BEARER. SAT [N] QUALIFICATION BOARDS, IDENTIFIED [N] KNOWLEDGE GAPS, AND DROVE REMEDIATION THAT RAISED FIRST-ATTEMPT PASS RATE TO [N]%.</code>
-      <p><strong>Earlier in the period, if you transferred in</strong></p>
-      <code>- IMPACT FROM DAY ONE. PRIOR TO REPORTING, SERVED AS [ROLE] IN [DIVISION], WHERE [ACTION] DELIVERED [RESULT].</code>
-      <p><strong>Programs and collateral duties</strong></p>
-      <code>- PROGRAM OWNER. MANAGED THE [PROGRAM] FOR [N] PERSONNEL; [N] EVOLUTIONS EXECUTED WITH ZERO DISCREPANCIES ON [INSPECTION].</code>
-      <code>- FIXED THE PROCESS. IDENTIFIED AND CORRECTED [PROBLEM], SAVING [N] MAN-HOURS PER [PERIOD].</code>
-      <p><strong>Closers</strong></p>
-      <code>- READY NOW. ASSIGN AS [BILLET]. HIGHLY RECOMMENDED FOR CHIEF PETTY OFFICER.</code>
-      <code>- PERFORMING ABOVE PAYGRADE. ASSIGN TO [BILLET] AND CONTINUE TO CHALLENGE.</code>
+      <p>Short Title Case lead-in, a period, then normal sentences. Fill in your own numbers.</p>
+      <p><strong>Opening statement</strong></p>
+      <code>Petty Officer [Name] is the instructor this division routes its hardest qualification cases to, and the watch section leader who returned [N] students to their crews on schedule.</code>
+      <p><strong>Bullet 1 &mdash; leadership or mentoring (mandatory first)</strong></p>
+      <code>- Develops Sailors. Mentored [N] junior personnel; [N] advanced in rate, [N] completed watch qualification, and [N] earned [recognition].</code>
+      <code>- Led From the Front. Supervised a [N]-person watch section through [N] evolutions with zero procedural compliance discrepancies.</code>
+      <p><strong>Bullet 2 &mdash; technical knowledge</strong></p>
+      <code>- Recognized Expert. Sought out site-wide for [system area] knowledge; resolved [N] technical questions and corrected [N] procedural errors before they reached students.</code>
+      <code>- Mastered the Material. Scored [N]% on level-of-knowledge examinations, [N] points above the division average.</code>
+      <p><strong>Bullet 3 &mdash; strongest remaining material</strong></p>
+      <code>- Superior Watchstander. Stood [N] watches as [station] across [N] evolutions, generating [N] hours of trainer availability for [N] student crews.</code>
+      <code>- Master Instructor. Delivered [N] hours of instruction to [N] personnel across [N] events; student exam average of [N]% exceeded the site standard.</code>
+      <code>- Pipeline Enabler. Conducted [N] oral checkouts for newly reported students in support of OCTG, returning [N] qualified watchstanders to their crews on schedule.</code>
+      <code>- Fixed the Process. Identified and corrected [problem], saving [N] man-hours per [period].</code>
+      <p><strong>Closing statements</strong></p>
+      <code>Petty Officer [Name] is a proven leader who excels at every task assigned, highly recommended for Chief Petty Officer.</code>
+      <code>Petty Officer [Name] is an excellent leader, has my recommendation for advancement to Chief Petty Officer upon qualification as Engineering Watch Supervisor.</code>
+      <code>Petty Officer [Name] is performing above paygrade and is ready now for assignment as [billet].</code>
+      <p style="margin-top:14px;color:#7A828A;font-size:13px;">Boards read recommendations as a ladder &mdash; "highly recommended" sits above "has my recommendation", which sits above a plain "recommended". Claiming a rung your record does not support is more damaging than the honest one.</p>
     </div>
   </details>
 
@@ -1223,7 +1249,7 @@
 
   /* ---------- EWS conditional ---------- */
   function syncCpo(){
-    if (ewsSel.value === 'Yes') cpoWrap.classList.remove('hidden');
+    if (ewsSel.value === 'Yes' || ewsSel.value === 'In progress') cpoWrap.classList.remove('hidden');
     else cpoWrap.classList.add('hidden');
   }
   ewsSel.addEventListener('change', function(){ syncCpo(); refresh(); });
@@ -1454,12 +1480,31 @@
     var lines = document.getElementById('f_lines').value;
     var chars = document.getElementById('f_chars').value;
     var ewsQual = ewsSel.value === 'Yes';
-    var cpoLine = ewsQual ? cpoSel.value : '';
+    var ewsProg = ewsSel.value === 'In progress';
+    var cpoStrength = (ewsQual || ewsProg) ? cpoSel.value : '';
+
+    var rateVal = document.getElementById('f_rate').value.trim();
+    var nameVal = document.getElementById('f_name').value.trim();
+    var openerName = 'Petty Officer ' + (nameVal ? nameVal : '[LAST NAME]');
+
+    var cpoPhrase = '';
+    if (cpoStrength === 'strongest'){
+      cpoPhrase = ewsProg ? 'is highly recommended for advancement to Chief Petty Officer'
+                          : 'highly recommended for Chief Petty Officer';
+    } else if (cpoStrength === 'standard'){
+      cpoPhrase = ewsProg ? 'has my recommendation for advancement to Chief Petty Officer'
+                          : 'has my recommendation for Chief Petty Officer';
+    } else if (cpoStrength === 'measured'){
+      cpoPhrase = ewsProg ? 'is recommended for advancement to Chief Petty Officer'
+                          : 'recommended for Chief Petty Officer';
+    }
 
     var sheet = [];
     var currentSection = null;
     for (var i = 0; i < f.length; i++){
       if (f[i].id === 'f_pfa' || f[i].id === 'f_cpo') continue;
+      // dates are worksheet context for the chain of command, not narrative material
+      if (f[i].id === 'f_lasteval' || f[i].id === 'f_reported' || f[i].id === 'f_gained') continue;
       if (!f[i].value) continue;
       if (f[i].section !== currentSection){
         currentSection = f[i].section;
@@ -1491,77 +1536,96 @@
     p.push('Write the Block 43 "Comments on Performance" narrative for the First Class Petty Officer');
     p.push('described below.');
     p.push('');
-    p.push('FORMAT RULES - FOLLOW EXACTLY');
-    p.push('1. ALL CAPS throughout.');
-    p.push('2. Fit within ' + lines + ' lines at approximately ' + chars + ' characters per line. Count as you go and');
-    p.push('   report the line count at the end. If it runs long, cut the weakest bullet, not the numbers.');
-    p.push('3. Bullet format: a hyphen, a two-to-five word CAPITALIZED lead-in ending in a period, then');
-    p.push('   one to three sentences of substance.');
-    p.push('   Shape:  - EXPERT WATCHSTANDER. [ACTION] [SCOPE/NUMBER] [RESULT/IMPACT].');
-    p.push('4. Every bullet follows ACTION -> SCOPE -> IMPACT. Never state a duty without a result.');
-    p.push('5. Use numerals for all numbers. Use every figure I have given you.');
-    p.push('6. Avoid pronouns. Start with a verb, or use the rate and last name.');
-    p.push('7. NEVER INVENT A NUMBER, AWARD, QUALIFICATION, OR EVENT. If a bullet would be stronger with');
-    p.push('   data I did not provide, write [NEED NUMBER] in the text and list what you need at the end.');
+    p.push('VOICE AND FORMATTING - FOLLOW EXACTLY');
+    p.push('1. DO NOT WRITE IN ALL CAPITAL LETTERS. Use normal sentence capitalization throughout.');
+    p.push('2. Each bullet begins with a short Title Case lead-in of one to three words, followed by a');
+    p.push('   period, then ordinary sentences. Like this:');
+    p.push('     - Expert Watchstander. Stood 58 watches as Engineering Watch Supervisor across 63');
+    p.push('       evolutions, generating 312 hours of trainer availability for 9 student crews.');
+    p.push('   The lead-in names the quality being demonstrated. The sentences supply the evidence.');
+    p.push('3. Every bullet follows action, then scope or number, then result. Never state a duty');
+    p.push('   without the result it produced.');
+    p.push('4. Use numerals for all numbers, and use every figure I have given you.');
+    p.push('5. Avoid filler adjectives. Words like "dedicated", "hardworking", "consummate');
+    p.push('   professional" and "consistently demonstrates" appear on nearly every eval a board reads');
+    p.push('   and tell them nothing. Cut any adjective that is not carrying evidence.');
+    p.push('6. NEVER INVENT A NUMBER, AWARD, QUALIFICATION, OR EVENT. If a bullet would be stronger');
+    p.push('   with data I did not provide, write [NEED NUMBER] and list what you need at the end.');
     p.push('   Do not estimate, round up, or fill gaps with plausible-sounding detail.');
-    p.push('8. Do NOT write a ranking statement (no "#2 OF 11") and do NOT assign a promotion');
-    p.push('   recommendation tier (no EARLY PROMOTE / MUST PROMOTE / PROMOTABLE). Those belong to the');
-    p.push('   reporting senior.');
-    p.push('9. No classified, NNPI, or CUI content. Keep technical references generic. If anything I have');
-    p.push('   given you looks like it should not be in a commercial AI chat, tell me before writing.');
-    p.push('10. Plain, hard language. No "consummate professional," no "tireless dedication," no');
-    p.push('    "unmatched," no stacked adjectives. Verbs and results.');
+    p.push('7. Do NOT write a ranking statement (no "#2 of 11") and do NOT assign a promotion');
+    p.push('   recommendation tier (no Early Promote / Must Promote / Promotable). Those belong to');
+    p.push('   the reporting senior.');
+    p.push('8. No classified, NNPI, or CUI content. Keep technical references generic. If anything I');
+    p.push('   have given you looks like it should not be in a commercial AI chat, tell me before writing.');
+    p.push('9. No exclamation points. No stacked adjectives. Plain, hard language.');
+    p.push('10. Fit the finished write-up within ' + lines + ' lines at approximately ' + chars + ' characters per line.');
+    p.push('    Count as you go and report the line count at the end.');
     p.push('');
-    p.push('STRUCTURE');
-    p.push('- Line 1: A short opening line establishing what this Sailor is and the scope of the impact.');
-    p.push('- FIRST BULLET: MUST be leadership or mentoring. This is mandatory. Lead with people');
-    p.push('  developed and what happened to them, not with technical work.');
-    p.push('- Second bullet: technical knowledge and professional expertise.');
-    p.push('- Remaining bullets: 3 to 4 more, strongest first, drawn from watchstanding, training');
-    p.push('  delivery, OCTG support, programs, and collateral duties as the material supports.');
-
+    p.push('STRUCTURE - OPENING, THREE BULLETS, CLOSING');
+    p.push('');
+    p.push('Opening statement. One or two sentences. It must begin exactly in this form:');
+    p.push('  "' + openerName + ' is ..."');
+    p.push('It establishes what this Sailor is and the scope of the impact. Not a list of duties -');
+    p.push('a characterization that the three bullets then prove.');
+    p.push('');
+    p.push('Bullets. Exactly THREE bullets in the write-up itself. Do not exceed three.');
+    p.push('  - Bullet 1 MUST be leadership or mentoring. This is mandatory. Lead with people');
+    p.push('    developed and what happened to them, not with technical work.');
+    p.push('  - Bullet 2 should be technical knowledge and professional expertise.');
+    p.push('  - Bullet 3 is the strongest remaining material: watchstanding, training delivery,');
+    p.push('    OCTG support, programs, or a collateral duty.');
     if (prevWork){
-      p.push('- Include one bullet covering the portion of the reporting period spent in the previous');
-      p.push('  division, and make clear it occurred earlier in the period. Do not let it displace the');
-      p.push('  leadership bullet from the first position.');
+      p.push('  - Time earlier in the reporting period was served in a different division. Work that');
+      p.push('    in where it is strongest, making clear it happened earlier in the period. It must');
+      p.push('    not displace the leadership bullet from the first position.');
     }
-
-    p.push('- Final line: the closing statement described below.');
     p.push('');
-    p.push('CLOSING STATEMENT - MANDATORY');
+    p.push('Closing statement. One sentence. See the wording rules below.');
+    p.push('');
+    p.push('ALTERNATE BULLET');
+    p.push('After the finished write-up, under a heading "Alternate bullet", give ONE additional');
+    p.push('bullet built from strong material that did not make the cut, and say in a single line');
+    p.push('which of the three it would best replace and what the trade-off is. The Sailor picks.');
+    p.push('');
+    p.push('CLOSING STATEMENT - WORDING');
 
-    if (ewsQual && cpoLine){
-      p.push('This Sailor is a qualified Engineering Watch Supervisor. The narrative MUST close with a');
-      p.push('Chief Petty Officer recommendation. The final line must contain this exact sentence, word');
-      p.push('for word:');
-      p.push('    ' + cpoLine);
-      p.push('You may precede it on the same line with a short forward-looking phrase naming the next');
-      p.push('billet this Sailor is ready for. Do not soften, reword, or qualify that sentence.');
-    } else if (ewsQual){
-      p.push('This Sailor is a qualified Engineering Watch Supervisor, but no Chief Petty Officer');
-      p.push('statement was authorized. Close on readiness for increased responsibility and name the');
-      p.push('specific next billet. Do not write a Chief Petty Officer recommendation.');
-    } else if (ewsSel.value === 'In progress'){
+    if (ewsQual && cpoStrength){
+      p.push('This Sailor is a qualified Engineering Watch Supervisor, so the write-up closes with a');
+      p.push('Chief Petty Officer recommendation. Write ONE sentence that begins with the rate,');
+      p.push('states the leadership quality earning the recommendation, and ends with this exact');
+      p.push('phrase: "' + cpoPhrase + '".');
+      p.push('Pattern to follow (do not copy the wording, follow the shape):');
+      p.push('  "' + openerName + ' is a proven leader who excels at every task assigned, ' + cpoPhrase + '."');
+    } else if (ewsProg && cpoStrength){
       p.push('This Sailor is in the Engineering Watch Supervisor qualification pipeline but is not yet');
-      p.push('qualified. Do NOT write a Chief Petty Officer recommendation. Close on qualification');
-      p.push('progress and readiness for increased responsibility, naming the specific next billet.');
+      p.push('qualified, so the recommendation must be made conditional on that qualification. Write');
+      p.push('ONE sentence that begins with the rate, states the leadership quality, and makes the');
+      p.push('advancement recommendation contingent on earning EWS.');
+      p.push('Pattern to follow (do not copy the wording, follow the shape):');
+      p.push('  "' + openerName + ' is an excellent leader, ' + cpoPhrase);
+      p.push('   upon qualification as Engineering Watch Supervisor."');
+    } else if (ewsQual || ewsProg){
+      p.push('No Chief Petty Officer statement was authorized. Close on demonstrated readiness for');
+      p.push('increased responsibility and name the specific next billet. Do not write a Chief Petty');
+      p.push('Officer recommendation.');
     } else {
       p.push('This Sailor is not Engineering Watch Supervisor qualified. Do NOT write a Chief Petty');
-      p.push('Officer recommendation. Close on readiness for increased responsibility and name the');
-      p.push('specific next billet.');
+      p.push('Officer recommendation - a board reads an unearned one as inflation and it damages the');
+      p.push('record. Close instead on demonstrated readiness for increased responsibility, naming');
+      p.push('the specific next billet the Sailor is ready for.');
     }
-
+    p.push('The closing is one sentence, in sentence case, with no exclamation point.');
     p.push('');
     p.push('TRAIT COVERAGE');
     p.push('The narrative must supply evidence for these seven graded traits. Tell me at the end which');
     p.push('traits are thinly supported so I can go find more material:');
-    p.push('  1. PROFESSIONAL KNOWLEDGE');
-    p.push('  2. QUALITY OF WORK');
-    p.push('  3. COMMAND OR ORGANIZATIONAL CLIMATE / EQUAL OPPORTUNITY');
-    p.push('  4. MILITARY BEARING / CHARACTER');
-    p.push('  5. PERSONAL JOB ACCOMPLISHMENT / INITIATIVE');
-    p.push('  6. TEAMWORK');
-    p.push('  7. LEADERSHIP');
+    p.push('  1. Professional Knowledge');
+    p.push('  2. Quality of Work');
+    p.push('  3. Command or Organizational Climate / Equal Opportunity');
+    p.push('  4. Military Bearing / Character');
+    p.push('  5. Personal Job Accomplishment / Initiative');
+    p.push('  6. Teamwork');
+    p.push('  7. Leadership');
     p.push('');
     p.push('COMMAND CONTEXT - USE THIS TO FRAME IMPACT');
     p.push('The member is a nuclear-trained First Class Petty Officer (MMN1, EMN1, or ETN1) assigned to an');
@@ -1578,12 +1642,39 @@
     p.push('MEMBER INFORMATION');
     p.push(sheet.join('\n').replace(/^\n+/, ''));
     p.push('');
-    p.push('DELIVERABLES');
-    p.push('1. The Block 43 narrative, formatted as above.');
-    p.push('2. Line count, and whether it fits.');
-    p.push('3. The specific data points you need from me to replace any [NEED NUMBER] tags.');
-    p.push('4. A one-line note on which of the seven traits are weakly supported.');
-    p.push('5. Two alternate opening leadership bullets.');
+    p.push('STANDARD OF COMPLETION - THIS IS THE MOST IMPORTANT INSTRUCTION');
+    p.push('Your first reply must be a finished product, not a draft to be worked up. Assume the');
+    p.push('Sailor will copy your write-up straight into Block 43 and submit it. That means:');
+    p.push('  - No placeholders, no square brackets, no blanks to fill in, and no [NEED NUMBER]');
+    p.push('    tags inside the write-up itself. The one permitted exception is the last name if I');
+    p.push('    did not give you one.');
+    p.push('  - If a figure is missing, write the bullet using only what I did give you and make it');
+    p.push('    work. Do not invent the number, and do not leave a gap where it would have gone.');
+    p.push('    Note separately, below the write-up, that the bullet would be stronger with it.');
+    p.push('  - No markdown, no bold, no asterisks, no headings inside the write-up. Plain text');
+    p.push('    only, with each bullet starting with a hyphen and a space.');
+    p.push('  - Check the length yourself before you answer. Count the characters in your longest');
+    p.push('    line and rewrite anything over ' + chars + ' characters until it fits. Do not hand me');
+    p.push('    something I have to reflow.');
+    p.push('  - Put the write-up first in your reply, by itself, so it can be selected and copied');
+    p.push('    in one go. Everything else comes after it.');
+    p.push('Aim for something the Sailor could submit as-is, and that their chief would only need');
+    p.push('to adjust at the margins.');
+    p.push('');
+    p.push('WHAT TO GIVE ME BACK, IN THIS ORDER');
+    p.push('1. The finished Block 43 write-up, under the heading "READY TO PASTE" and nothing else');
+    p.push('   mixed into it: opening statement, three bullets, closing statement.');
+    p.push('2. Line count and longest line length, confirming it fits ' + lines + ' lines of ' + chars + ' characters.');
+    p.push('3. The alternate bullet, with the one-line note on what it would replace.');
+    p.push('4. Any figures that would have strengthened a bullet, as specific questions.');
+    p.push('5. One line on which of the seven traits are weakly supported by this material.');
+    p.push('6. QUESTIONS FOR ME. Ask up to five specific questions whose answers would most improve');
+    p.push('   this write-up. Ask about missing numbers, unclear scope, outcomes you suspect exist but');
+    p.push('   were not stated, and anything ambiguous in what I gave you. Do not ask generic');
+    p.push('   questions - ask about this Sailor and this material.');
+    p.push('7. SUGGESTED NEXT PROMPTS. Give me five short follow-up prompts, written so I can paste');
+    p.push('   them straight back to you, that would sharpen this specific draft. Tailor them to the');
+    p.push('   actual weaknesses you see - not a generic list.');
     p.push('');
     p.push('If what I have given you is too thin to write a credible eval, say so and ask me targeted');
     p.push('questions instead of writing something generic.');
@@ -1701,7 +1792,7 @@
 
     var anyData = false;
     for (var a = 0; a < f.length; a++){
-      if (f[a].el === cpoSel && ewsSel.value !== 'Yes') continue;
+      if (f[a].el === cpoSel && ewsSel.value !== 'Yes' && ewsSel.value !== 'In progress') continue;
       if (f[a].value){ anyData = true; break; }
     }
     if (!anyData && collaterals().length) anyData = true;
@@ -1729,7 +1820,7 @@
 
     for (var i = 0; i < f.length; i++){
       var item = f[i];
-      if (item.el === cpoSel && ewsSel.value !== 'Yes') continue;
+      if (item.el === cpoSel && ewsSel.value !== 'Yes' && ewsSel.value !== 'In progress') continue;
       if (anyData && !item.value) continue;
 
       if (item.section !== currentSection){
@@ -1947,7 +2038,7 @@
     // whole worksheet with writing lines so it can be filled by hand.
     var anyData = false;
     for (var a = 0; a < f.length; a++){
-      if (f[a].el === cpoSel && ewsSel.value !== 'Yes') continue; // has a default value
+      if (f[a].el === cpoSel && ewsSel.value !== 'Yes' && ewsSel.value !== 'In progress') continue; // has a default value
       if (f[a].value){ anyData = true; break; }
     }
     if (!anyData && collaterals().length) anyData = true;
@@ -2021,7 +2112,7 @@
 
     for (var i = 0; i < f.length; i++){
       var item = f[i];
-      if (item.el === cpoSel && ewsSel.value !== 'Yes') continue;
+      if (item.el === cpoSel && ewsSel.value !== 'Yes' && ewsSel.value !== 'In progress') continue;
       if (anyData && !item.value) continue;
 
       if (item.section !== currentSection){
